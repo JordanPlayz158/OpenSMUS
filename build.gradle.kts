@@ -14,8 +14,6 @@ repositories {
     mavenLocal()
     maven {
         url = uri("https://repository.jboss.org/nexus/content/groups/public/")
-
-        // isAllowInsecureProtocol = true
     }
 
     maven {
@@ -25,10 +23,17 @@ repositories {
 }
 
 dependencies {
+    implementation(kotlin("stdlib"))
+
     api(libs.org.jboss.netty.netty)
     runtimeOnly(libs.hsqldb.hsqldb)
-    testImplementation(libs.junit.junit)
-    implementation(kotlin("stdlib"))
+
+
+    testImplementation(kotlin("test"))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 group = "net.sf.opensmus"
