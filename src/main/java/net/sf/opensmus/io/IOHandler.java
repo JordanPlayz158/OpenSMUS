@@ -1,57 +1,38 @@
 package net.sf.opensmus.io;
 
-import org.jboss.netty.channel.*;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.handler.timeout.IdleStateEvent;
-import org.jboss.netty.handler.timeout.IdleStateAwareChannelUpstreamHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
+import io.netty.handler.timeout.IdleStateEvent;
 import net.sf.opensmus.*;
 
-import java.nio.channels.ClosedChannelException;
 import java.io.IOException;
 
 @ChannelHandler.Sharable
-public class IOHandler extends IdleStateAwareChannelUpstreamHandler {
-
-    public IOHandler() {
-
-    }
-
-
+public class IOHandler extends SimpleChannelInboundHandler<ByteBuf> {
     @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // MUSUser whatUser = ((SMUSPipeline) ctx.getPipeline()).user;
         // MUSLog.Log("Channel disconnect for " + whatUser.name(), MUSLog.kDeb);
-        ctx.getChannel().close().addListener(MUSUser.REPORT_CLOSE);
-    }
+        ctx.channel().close().addListener(MUSUser.REPORT_CLOSE);
 
-
-    @Override
-    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        MUSUser whatUser = ((SMUSPipeline) ctx.getPipeline()).user; // Figure out what user this is
+        MUSUser whatUser = ((SMUSPipeline) ctx.pipeline()).user; // Figure out what user this is
         // MUSLog.Log("Channel closed for: " + whatUser.name(), MUSLog.kDeb);
         whatUser.killMUSUser();
+
+        super.channelInactive(ctx);
     }
 
-
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-
+    public void channelRead0(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
         // Sometimes the MessageEvent is just bool "false"
         // This can happen when a client disconnects
         // Not sure if this still happens in Netty 3.2.1...
-        Object incoming = e.getMessage();
-        if (!(incoming instanceof ChannelBuffer)) {
-            System.out.println("Illegal messageReceived: " + e + e.getMessage());
-            return;
-        }
-        // Always assume the (complete) message is a ChannelBuffer, created by the framer
-        ChannelBuffer buffer = (ChannelBuffer) incoming;
 
         // Decode the message
         MUSMessage msg = new MUSMessage(buffer); // The incoming buffer does NOT have the 6 headerbytes (ID & length info)
 
-         // Figure out what user this is
-        MUSUser whatUser = ((SMUSPipeline) ctx.getPipeline()).user;
+        // Figure out what user this is
+        MUSUser whatUser = ((SMUSPipeline) ctx.pipeline()).user;
 
         // Prevent spoofing of userid by ignoring the parsed senderID !
         // ALWAYS do this on incoming messages.
@@ -62,34 +43,37 @@ public class IOHandler extends IdleStateAwareChannelUpstreamHandler {
         // ^--- All above from SMUSDecoder
 
         whatUser.postMessage(msg);
+
+        super.channelRead(ctx, msg);
     }
 
-
     @Override
-    public void channelIdle(ChannelHandlerContext ctx, IdleStateEvent e) throws Exception {
-        // Disconnect an idle client
-        MUSUser whatUser = ((SMUSPipeline) ctx.getPipeline()).user; // Figure out what user this is
-        // MUSLog.Log("Idle event for " + whatUser.name(), MUSLog.kDeb);
-        notifyIdleDisconnect(whatUser);
-        whatUser.deleteUser();
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent) {
+            // Disconnect an idle client
+            MUSUser whatUser = ((SMUSPipeline) ctx.pipeline()).user; // Figure out what user this is
+            // MUSLog.Log("Idle event for " + whatUser.name(), MUSLog.kDeb);
+            notifyIdleDisconnect(whatUser);
+            whatUser.deleteUser();
+        }
     }
 
-
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         // Normal to get these exceptions:
         // java.io.IOException: Connection reset by peer
         // java.nio.channels.ClosedChannelException
 
-        Channel ch = e.getChannel();
-        MUSUser whatUser = ((SMUSPipeline) ch.getPipeline()).user;
-        Throwable cause = e.getCause();
-        if (!(cause instanceof ClosedChannelException || cause instanceof IOException)) {
+        Channel ch = ctx.channel();
+        MUSUser whatUser = ((SMUSPipeline) ch.pipeline()).user;
+        if (!(cause instanceof IOException)) {
             MUSLog.Log("Netty Exception " + cause + " for " + whatUser, MUSLog.kDeb);
             cause.printStackTrace();
         }
         // Close the connection on exceptional situations
         ch.close().addListener(MUSUser.REPORT_CLOSE);
+
+        super.exceptionCaught(ctx, cause);
     }
 
     private void notifyIdleDisconnect(MUSUser usr) {
@@ -113,5 +97,4 @@ public class IOHandler extends IdleStateAwareChannelUpstreamHandler {
 
         usr.sendMessage(msg);
     }
-
 }

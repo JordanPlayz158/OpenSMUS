@@ -29,7 +29,7 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class MUSLogonMessage extends MUSMessage {
 
@@ -51,7 +51,7 @@ public class MUSLogonMessage extends MUSMessage {
     String m_localUDPAddress;
     int m_localUDPPort;
 
-    private MUSBlowfish m_cipher; // Only used to decrypt the logon contents
+    private final MUSBlowfish m_cipher; // Only used to decrypt the logon contents
 
     int m_logonPacketFormat = 0; // 0 = old style (list with 3 items), 1 = SMUS 3 style (property list)
 
@@ -61,7 +61,7 @@ public class MUSLogonMessage extends MUSMessage {
     }
 
     @Override
-    public void extractMUSMessage(ChannelBuffer msg) {
+    public void extractMUSMessage(ByteBuf msg) {
 
         byte[] rawContents = readRawBytes(msg);
 

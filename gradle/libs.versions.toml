@@ -3,8 +3,8 @@
 
 [versions]
 hsqldb-hsqldb = "1.8.0.10"
-org-jboss-netty-netty = "3.2.1.Final"
+io-netty-netty-all = "4.1.104.Final"
 
 [libraries]
 hsqldb-hsqldb = { module = "hsqldb:hsqldb", version.ref = "hsqldb-hsqldb" }
-org-jboss-netty-netty = { module = "org.jboss.netty:netty", version.ref = "org-jboss-netty-netty" }
+io-netty-netty-all = { module = "io.netty:netty-all", version.ref = "io-netty-netty-all" }

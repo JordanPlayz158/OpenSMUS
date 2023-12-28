@@ -29,9 +29,9 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
+import io.netty.buffer.ByteBuf;
 
+import io.netty.buffer.ByteBufUtil;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -73,13 +73,13 @@ public class MUSMsgHeaderString {
     /**
      * Reserved for internal use of OpenSMUS.
      */
-    public void extractMUSMsgHeaderString(ChannelBuffer buffer) {
+    public void extractMUSMsgHeaderString(ByteBuf buffer) {
 
         int strSize = buffer.readInt();
 
         // Sanity check
         if (strSize < 0 || strSize > buffer.readableBytes()) {
-            MUSLog.Log("MUSMsgHeaderString size error : " + strSize + " " + buffer.readableBytes() + " " + ChannelBuffers.hexDump(buffer), MUSLog.kDeb);
+            MUSLog.Log("MUSMsgHeaderString size error : " + strSize + " " + buffer.readableBytes() + " " + ByteBufUtil.hexDump(buffer), MUSLog.kDeb);
             throw new NullPointerException("MUSMsgHeaderString size error " + strSize + " " + buffer.readableBytes());
         }
 

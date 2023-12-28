@@ -46,7 +46,7 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class MUSBlowfishCypher {
     // public final static int MAXKEYLENGTH = 56;
@@ -204,11 +204,11 @@ public class MUSBlowfishCypher {
 
 
     // Handles lengths that are not multiples of 8
-    public void encrypt(ChannelBuffer buffer) {
+    public void encrypt(ByteBuf buffer) {
 
         int nLen = buffer.readableBytes();
 
-        ChannelBuffer mirror = buffer.duplicate(); // Create a mirror buffer to be used for putting back the encrypted longs
+        ByteBuf mirror = buffer.duplicate(); // Create a mirror buffer to be used for putting back the encrypted longs
         mirror.writerIndex(buffer.readerIndex()); // Set the writer index to the start of the buffer
 
         try {
@@ -226,7 +226,7 @@ public class MUSBlowfishCypher {
                 // (= The original request was not for /8 number of bytes)
                 // MUSLog.Log("Decrypt remainder for uneven length: " + nLen, MUSLog.kDeb);
 
-                long lastLong = 0l;
+                long lastLong = 0L;
 
                 // Move in the last bytes
                 for (int pos = 0; pos < nLen; pos++) {
@@ -244,7 +244,7 @@ public class MUSBlowfishCypher {
 
                 // Can't use putLong() since we do not want to overwrite "unused" bytes
                 for (int a = 0; a < nLen; a++) {
-                    byte temp = (byte) ((lastLong & 0xFF00000000000000l) >> 56);
+                    byte temp = (byte) ((lastLong & 0xFF00000000000000L) >> 56);
                     mirror.writeByte(temp);
                     lastLong <<= 8;
                 }
@@ -263,7 +263,7 @@ public class MUSBlowfishCypher {
 
             // MUSLog.Log("Encrypt remainder for uneven length at end of buffer: " + nLen, MUSLog.kDeb);
 
-            long lastLong = 0l;
+            long lastLong = 0L;
 
             // Move in the last bytes
             for (int pos = 0; pos < nLen; pos++) {
@@ -282,7 +282,7 @@ public class MUSBlowfishCypher {
             // Can't use putLong() since the buffer has no room for that.
             // + we do not want to overwrite "unused" bytes even if it did
             for (int a = 0; a < nLen; a++) {
-                byte temp = (byte) ((lastLong & 0xFF00000000000000l) >> 56);
+                byte temp = (byte) ((lastLong & 0xFF00000000000000L) >> 56);
                 mirror.writeByte(temp);
                 lastLong <<= 8;
             }
@@ -305,7 +305,7 @@ public class MUSBlowfishCypher {
 
 
     // NOT USED!
-    public void decrypt(ChannelBuffer buffer) {
+    public void decrypt(ByteBuf buffer) {
 
         int nLen = buffer.readableBytes();
         // buffer.readerIndex(0); // Necessary??
@@ -323,14 +323,14 @@ public class MUSBlowfishCypher {
 
     // decrypt that processes specific number of bytes in the buffer
     // Handles lengths that are not multiples of 8
-    public void decrypt(ChannelBuffer buffer, int nLen) {
+    public void decrypt(ByteBuf buffer, int nLen) {
 
         // TEMP! Sanity check: First make sure that the remainder is enough
         //   if (buffer.readableBytes() < nLen) {
         //       MUSLog.Log("Decrypt ERROR on start: Not enough bytes in buffer " + buffer.readableBytes() + "/" + nLen, MUSLog.kDeb);
         //   }
 
-        ChannelBuffer mirror = buffer.duplicate(); // Create a mirror buffer to be used for putting back the encrypted longs
+        ByteBuf mirror = buffer.duplicate(); // Create a mirror buffer to be used for putting back the encrypted longs
         mirror.writerIndex(buffer.readerIndex()); // Set the writer index to the start of the buffer
 
         // MUSLog.Log("Buffer info: " + buffer + ChannelBuffers.hexDump(buffer,0,8), MUSLog.kDeb);
@@ -350,7 +350,7 @@ public class MUSBlowfishCypher {
                 // (= The original request was not for /8 number of bytes)
                 // MUSLog.Log("Decrypt remainder for uneven length: " + nLen, MUSLog.kDeb);
 
-                long lastLong = 0l;
+                long lastLong = 0L;
 
                 // Move in the last bytes
                 for (int pos = 0; pos < nLen; pos++) {
@@ -368,7 +368,7 @@ public class MUSBlowfishCypher {
 
                 // Can't use putLong() since we do not want to overwrite "unused" bytes
                 for (int a = 0; a < nLen; a++) {
-                    byte temp = (byte) ((lastLong & 0xFF00000000000000l) >> 56);
+                    byte temp = (byte) ((lastLong & 0xFF00000000000000L) >> 56);
                     mirror.writeByte(temp);
                     lastLong <<= 8;
                 }
@@ -391,7 +391,7 @@ public class MUSBlowfishCypher {
 
             // MUSLog.Log("Decrypt remainder for uneven length at end of buffer: " + nLen, MUSLog.kDeb);
 
-            long lastLong = 0l;
+            long lastLong = 0L;
 
             // Move in the last bytes
             for (int pos = 0; pos < nLen; pos++) {
@@ -410,7 +410,7 @@ public class MUSBlowfishCypher {
             // Can't use putLong() since the buffer has no room for that.
             // + we do not want to overwrite "unused" bytes even if it did
             for (int a = 0; a < nLen; a++) {
-                byte temp = (byte) ((lastLong & 0xFF00000000000000l) >> 56);
+                byte temp = (byte) ((lastLong & 0xFF00000000000000L) >> 56);
                 mirror.writeByte(temp);
                 lastLong <<= 8;
             }
@@ -492,13 +492,13 @@ public class MUSBlowfishCypher {
     }
 
 
-    final static int pbox_init[] = {
+    final static int[] pbox_init = {
 
             0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344, 0xa4093822, 0x299f31d0,
             0x082efa98, 0xec4e6c89, 0x452821e6, 0x38d01377, 0xbe5466cf, 0x34e90c6c,
             0xc0ac29b7, 0xc97c50dd, 0x3f84d5b5, 0xb5470917, 0x9216d5d9, 0x8979fb1b};
 
-    final static int sbox_init_1[] = {
+    final static int[] sbox_init_1 = {
 
             0xd1310ba6, 0x98dfb5ac, 0x2ffd72db, 0xd01adfb7, 0xb8e1afed, 0x6a267e96,
             0xba7c9045, 0xf12c7f99, 0x24a19947, 0xb3916cf7, 0x0801f2e2, 0x858efc16,
@@ -545,7 +545,7 @@ public class MUSBlowfishCypher {
             0x53b02d5d, 0xa99f8fa1, 0x08ba4799, 0x6e85076a};
 
 
-    final static int sbox_init_2[] = {
+    final static int[] sbox_init_2 = {
 
             0x4b7a70e9, 0xb5b32944,
             0xdb75092e, 0xc4192623, 0xad6ea6b0, 0x49a7df7d, 0x9cee60b8, 0x8fedb266,
@@ -592,7 +592,7 @@ public class MUSBlowfishCypher {
             0xc5c43465, 0x713e38d8, 0x3d28f89e, 0xf16dff20, 0x153e21e7, 0x8fb03d4a,
             0xe6e39f2b, 0xdb83adf7};
 
-    final static int sbox_init_3[] = {
+    final static int[] sbox_init_3 = {
 
             0xe93d5a68, 0x948140f7, 0xf64c261c, 0x94692934,
             0x411520f7, 0x7602d4f7, 0xbcf46b2e, 0xd4a20068, 0xd4082471, 0x3320f46a,
@@ -639,7 +639,7 @@ public class MUSBlowfishCypher {
             0x362abfce, 0xddc6c837, 0xd79a3234, 0x92638212, 0x670efa8e, 0x406000e0};
 
 
-    final static int sbox_init_4[] = {
+    final static int[] sbox_init_4 = {
 
             0x3a39ce37, 0xd3faf5cf, 0xabc27737, 0x5ac52d1b, 0x5cb0679e, 0x4fa33742,
             0xd3822740, 0x99bc9bbe, 0xd5118e9d, 0xbf0f7315, 0xd62d1c7e, 0xc700c47b,

@@ -1,8 +1,8 @@
 package net.sf.opensmus.io;
 
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
 import net.sf.opensmus.*;
 
 import java.net.InetSocketAddress;
@@ -18,43 +18,38 @@ public class LogonHandler extends IOHandler {
         channels = cg;
     }
 
-
     @Override
-    public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) {
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        Channel channel = ctx.channel();
+
         // Add all open channels to the global group so that they are closed on shutdown.
         // If the added channel is closed before shutdown, it will be removed from the group automatically.
-        channels.add(e.getChannel());
-    }
+        channels.add(channel);
 
+        String ip = ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
 
-    @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-
-        String ip = ((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress().getHostAddress();
-        
         MUSLog.Log("Client connection initialized : " + (m_server.m_clientlist.size() + 1) + " (" + ip + ")", MUSLog.kSrv);
         // Create a user object for this new connection
-        MUSUser newUser = new MUSUser(m_server, ctx.getChannel());
+        MUSUser newUser = new MUSUser(m_server, channel);
 
         // Store the user object in the session so we will know who it is when data arrive
-        ((SMUSPipeline) ctx.getPipeline()).user = newUser;
+        ((SMUSPipeline) ctx.pipeline()).user = newUser;
+
+        super.channelActive(ctx);
     }
 
-
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-
+    public void channelRead0(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
         // Figure out what user this is
-        MUSUser whatUser = ((SMUSPipeline) ctx.getPipeline()).user;
+        MUSUser whatUser = ((SMUSPipeline) ctx.pipeline()).user;
 
         MUSLogonMessage msg = new MUSLogonMessage();
-
-        // Always assume the (complete) message is a ChannelBuffer, created by the framer
-        ChannelBuffer buffer = (ChannelBuffer) e.getMessage();
 
         // Decode the message
         msg.extractMUSMessage(buffer);  // The incoming buffer does NOT have the 6 headerbytes (ID & length info)
 
         m_server.queueLogonMessage(msg, whatUser);
+
+        super.channelRead(ctx, buffer);
     }
 }

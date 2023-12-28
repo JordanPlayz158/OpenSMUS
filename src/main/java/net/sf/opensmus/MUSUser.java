@@ -29,7 +29,7 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.channel.*;
+import io.netty.channel.*;
 
 import java.io.*;
 import java.util.*;
@@ -40,21 +40,19 @@ import net.sf.opensmus.io.SMUSPipeline;
 /////////////////////////////////////////////////////////////
 public class MUSUser implements ServerUser {
 
-    private MUSServer m_server;
+    private final MUSServer m_server;
 
     // Netty
     Channel channel;
     Channel udpchannel;
-    public static ChannelFutureListener REPORT_CLOSE = new ChannelFutureListener() {  // Used to track channel close during dev
-        public void operationComplete(ChannelFuture future) {
-            MUSUser whatUser = ((SMUSPipeline) future.getChannel().getPipeline()).user;
-            if (future.isSuccess()) {
-               // MUSLog.Log("Close success for " + whatUser, MUSLog.kDeb);
-            } else {
-                MUSLog.Log("Close failure for " + whatUser + ": " + future.getCause(), MUSLog.kDeb);
-                whatUser.m_scheduledToDie = false;
-                future.getChannel().close(); // Try again...
-            }
+    public static ChannelFutureListener REPORT_CLOSE = future -> {  // Used to track channel close during dev
+        MUSUser whatUser = ((SMUSPipeline) future.channel().pipeline()).user;
+        if (future.isSuccess()) {
+            // MUSLog.Log("Close success for " + whatUser, MUSLog.kDeb);
+        } else {
+            MUSLog.Log("Close failure for " + whatUser + ": " + future.cause(), MUSLog.kDeb);
+            whatUser.m_scheduledToDie = false;
+            future.channel().close(); // Try again...
         }
     };
 
@@ -77,7 +75,7 @@ public class MUSUser implements ServerUser {
     public String m_name = "";
     public MUSMovie m_movie;
     public int m_userlevel = 0;
-    private Vector<ServerGroup> m_grouplist = new Vector<ServerGroup>();
+    private final Vector<ServerGroup> m_grouplist = new Vector<>();
     private int m_creationtime = 0;
 
 
@@ -91,7 +89,7 @@ public class MUSUser implements ServerUser {
 
         ip = this.ipAsInteger();
 
-        m_name = "tmp_login_" + channel.getId();
+        m_name = "tmp_login_" + channel.id();
     }
 
 
@@ -106,7 +104,7 @@ public class MUSUser implements ServerUser {
         InetAddress m_userUDPAddress;
         if (logmsg.m_localAddressInfo.getType() == LValue.vt_Void) {
             // Get from tcp socket
-            m_userUDPAddress = ((InetSocketAddress) channel.getRemoteAddress()).getAddress();
+            m_userUDPAddress = ((InetSocketAddress) channel.remoteAddress()).getAddress();
         } else {
             // User specified ipaddress
             try {
@@ -144,9 +142,9 @@ public class MUSUser implements ServerUser {
             m_udpportnumber = m_server.getUDPPortNumber();
 
             // Netty
-            udpchannel = m_server.UDPBootstrap.bind(new InetSocketAddress(iad, m_udpportnumber));
+            udpchannel = m_server.UDPBootstrap.bind(new InetSocketAddress(iad, m_udpportnumber)).channel();
             // Set the UDP channel's user to the "parent" tcp channel's user
-            ((SMUSPipeline) udpchannel.getPipeline()).user = this;
+            ((SMUSPipeline) udpchannel.pipeline()).user = this;
 
             // If you are using NIO and DatagramChannel.write() you have to connect the channel to the target, 
             // so that NIO knows where to send the packets, because the write() API doesn't have the target address
@@ -428,7 +426,8 @@ public class MUSUser implements ServerUser {
     public void sendMessage(MUSMessage msg) {
         if (msg.m_udp && m_udpenabled) {
             MUSLog.Log("Writing outgoing UDP message : " + msg, MUSLog.kDeb);
-            udpchannel.write(msg, m_UDPSocketAddress); // m_udplistener.send(msg, m_userUDPAddress, m_userUDPPort);
+            //udpchannel.write(msg, m_UDPSocketAddress); // m_udplistener.send(msg, m_userUDPAddress, m_userUDPPort);
+            udpchannel.write(msg); // m_udplistener.send(msg, m_userUDPAddress, m_userUDPPort);
         } else {
             // Netty
             // MUSLog.Log("Writing outgoing message to " + m_name + ": " + msg, MUSLog.kDeb);
@@ -480,7 +479,7 @@ public class MUSUser implements ServerUser {
         // Netty
         if (level >= m_server.m_props.getIntProperty("AntiFloodUserLevelIgnore")) {
             try {
-                channel.getPipeline().remove("floodfilter");
+                channel.pipeline().remove("floodfilter");
             }
             catch (NoSuchElementException e) {
                 // MUSLog.Log("Couldn't remove the antiflood filter.", MUSLog.kDeb);
@@ -497,11 +496,11 @@ public class MUSUser implements ServerUser {
     }
 
     public String ipAddress() {
-        return ((InetSocketAddress) channel.getRemoteAddress()).getAddress().getHostAddress();
+        return ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
     }
 
     public int ipAsInteger() {
-        byte[] adr = ((InetSocketAddress) channel.getRemoteAddress()).getAddress().getAddress();
+        byte[] adr = ((InetSocketAddress) channel.remoteAddress()).getAddress().getAddress();
         return ConversionUtils.byteArrayToInt(adr, 0);
     }
 
@@ -516,7 +515,7 @@ public class MUSUser implements ServerUser {
     }
 
     public Vector<ServerGroup> getGroups() {
-        return new Vector<ServerGroup>(m_grouplist);
+        return new Vector<>(m_grouplist);
     }
 
     public int getGroupsCount() {

@@ -1,8 +1,8 @@
 package net.sf.opensmus.io;
 
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
 import net.sf.opensmus.*;
 
 
@@ -17,33 +17,23 @@ public class UDPIOHandler extends IOHandler {
         channels = cg;
     }
 
-
     @Override
-    public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) {
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // Add all open channels to the global group so that they are closed on shutdown.
         // If the added channel is closed before shutdown, it will be removed from the group automatically.
-        channels.add(e.getChannel());
+        channels.add(ctx.channel());
+
+        super.channelActive(ctx);
     }
 
-
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        // This gets called when the server connect()s to the client udp port
-    }
-
-
-    @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-
+    public void channelRead0(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
         // Figure out what user this is
-        MUSUser whatUser = ((SMUSPipeline) ctx.getPipeline()).user;
+        MUSUser whatUser = ((SMUSPipeline) ctx.pipeline()).user;
 
         MUSLog.Log("UDP message arrived from " + whatUser.name(), MUSLog.kDeb);
 
         MUSMessage msg = new MUSLogonMessage();
-
-        // Always assume the (complete) message is a ChannelBuffer, created by the framer
-        ChannelBuffer buffer = (ChannelBuffer) e.getMessage();
 
         // Decode the message
         msg.extractMUSMessage(buffer);  // Main entry of incoming messages  <-- The incoming buffer does NOT have the 6 headerbytes (ID & length info)
@@ -69,5 +59,6 @@ public class UDPIOHandler extends IOHandler {
 
         whatUser.postMessage(msg);
 
+        super.channelRead(ctx, buffer);
     }
 }

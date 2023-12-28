@@ -29,13 +29,18 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.bootstrap.ServerBootstrap;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFactory;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+//import io.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.*;
 
 import java.util.concurrent.Executors;
@@ -45,7 +50,7 @@ import net.sf.opensmus.io.*;
 /////////////////////////////////////////////////////////////
 public class MUSConnectionPort {
 
-    private ChannelFactory factory;
+    //private ChannelFactory factory;
 
     // Netty
     public ChannelGroup m_channels;
@@ -66,34 +71,41 @@ public class MUSConnectionPort {
             else
                 iad = InetAddress.getByName(ipaddress);
 
-            m_channels = new DefaultChannelGroup("OpenSMUS"); // The name can be duplicates, we use it by reference anyway.
+            m_channels = new DefaultChannelGroup("OpenSMUS", GlobalEventExecutor.INSTANCE); // The name can be duplicates, we use it by reference anyway.
 
-            factory = new NioServerSocketChannelFactory(
-                    Executors.newCachedThreadPool(),
-                    Executors.newCachedThreadPool());
+            //factory = new NioServerSocketChannelFactory(
+            //        Executors.newCachedThreadPool(),
+            //        Executors.newCachedThreadPool());
 
-            ServerBootstrap bootstrap = new ServerBootstrap(factory);
+            ServerBootstrap bootstrap = new ServerBootstrap();
+            //bootstrap.channelFactory(factory);
 
             // Set up the event pipeline factory.
-            bootstrap.setPipelineFactory(new SMUSPipelineFactory(srv, m_channels, false));
+            bootstrap.childHandler(new SMUSPipelineFactory(srv, m_channels, false));
+            //bootstrap.setPipelineFactory(new SMUSPipelineFactory(srv, m_channels, false));
 
             // The initial idletime will be for the login only. Once a user is logged in it will be changed to the normal idle.
             // this.bootstrap.getSessionConfig().setReaderIdleTime(m_server.m_props.getIntProperty("MaxLoginWait"));
             // @TODO: This is not yet implemented in Netty
 
+
             boolean tcpdelayflag = (m_server.m_props.getIntProperty("tcpNoDelay") == 1);
-            bootstrap.setOption("child.tcpNoDelay", tcpdelayflag);
+            bootstrap.childOption(ChannelOption.TCP_NODELAY, tcpdelayflag);
 
             int lingerTime = m_server.m_props.getIntProperty("soLingerTime");
             if (lingerTime != -1) {
-                bootstrap.setOption("child.soLinger", lingerTime);
+                bootstrap.option(ChannelOption.SO_LINGER, lingerTime);
                 MUSLog.Log("New Socket LingerTime > " + lingerTime, MUSLog.kDebWarn);
             }
 
-            bootstrap.setOption("reuseAddress", true); // Needed to fix the locking up of ports after shutdown
+            bootstrap.option(ChannelOption.SO_REUSEADDR, true); // Needed to fix the locking up of ports after shutdown
             // bootstrap.setOption("child.reuseAddress", true); // Is this needed?
 
-            Channel sc = bootstrap.bind(new InetSocketAddress(iad, port)); // Start listening to the port and accept connections
+            //Channel sc = bootstrap.bind(new InetSocketAddress(iad, port)); // Start listening to the port and accept connections
+            EventLoopGroup group = new NioEventLoopGroup(); // (1)
+            bootstrap.group(group);
+            bootstrap.channel(NioServerSocketChannel.class);
+            Channel sc = bootstrap.bind(new InetSocketAddress(iad, port)).channel(); // Start listening to the port and accept connections
 
             // Add the server socket to the global channel group.
             m_channels.add(sc);
@@ -117,7 +129,8 @@ public class MUSConnectionPort {
             // Close all connections and server sockets.
             m_channels.close().awaitUninterruptibly();
             // Shutdown the selector loop (boss and worker).
-            factory.releaseExternalResources();
+            // Netty 4
+            //factory.releaseExternalResources();
 
             MUSLog.Log("Connection port stopped", MUSLog.kSys);
         } catch (Exception e) {

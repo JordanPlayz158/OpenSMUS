@@ -1,34 +1,31 @@
 package net.sf.opensmus.io;
 
+import java.util.concurrent.TimeUnit;
 import net.sf.opensmus.MUSServerProperties;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.handler.timeout.IdleStateHandler;
-import org.jboss.netty.handler.execution.ExecutionHandler;
-import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
-import org.jboss.netty.util.HashedWheelTimer;
+import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.handler.timeout.IdleStateHandler;
 import net.sf.opensmus.MUSServer;
 import net.sf.opensmus.MUSLog;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
-public class SMUSPipelineFactory implements ChannelPipelineFactory {
+public class SMUSPipelineFactory extends ChannelInitializer {
 
     // Stateless, singleton handler instances. Re-used across connections.
     private static final ChannelHandler ENCODER = new SMUSEncoder();
     public static final ChannelHandler HANDLER = new IOHandler();
     public final ChannelHandler LOGGER;
-    private ExecutionHandler EXECUTOR;
+//    private ExecutionHandler EXECUTOR;
 
     private MUSServer m_server;
     private ChannelGroup channels;
     boolean useUDP = false;
-    private HashedWheelTimer timer;
+    //private HashedWheelTimer timer;
     private int idleTimeout;
     private boolean useLogging = false;
     private boolean allEncryptionEnabled = false;
-    private int threadPoolSize;
+    //private int threadPoolSize;
 
     private boolean useFloodProtection = false;
     final ArrayList<ArrayList> antiFloodSettings = new ArrayList<ArrayList>();
@@ -41,12 +38,12 @@ public class SMUSPipelineFactory implements ChannelPipelineFactory {
 
         LOGGER = new LogFilter(m_server);
 
-        threadPoolSize = m_server.m_props.getIntProperty("ThreadPoolSize");
-        if (threadPoolSize > 0) {
-            int maxMem = m_server.m_props.getIntProperty("MaxUserMemorySize");
-            int maxTotalMem = m_server.m_props.getIntProperty("MaxTotalMemorySize");
-            EXECUTOR = new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(threadPoolSize, maxMem, maxTotalMem));
-        }
+//        threadPoolSize = m_server.m_props.getIntProperty("ThreadPoolSize");
+//        if (threadPoolSize > 0) {
+//            int maxMem = m_server.m_props.getIntProperty("MaxUserMemorySize");
+//            int maxTotalMem = m_server.m_props.getIntProperty("MaxTotalMemorySize");
+//            EXECUTOR = new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(threadPoolSize, maxMem, maxTotalMem));
+//        }
 
         // Look up these properties once instead of every pipeline creation
         idleTimeout = m_server.m_props.getIntProperty("IdleTimeOut");
@@ -67,15 +64,16 @@ public class SMUSPipelineFactory implements ChannelPipelineFactory {
         }
 
         // Set up the timer to use for scheduling timeouts
-        timer = new HashedWheelTimer(5, TimeUnit.SECONDS); // @TODO: Are the defaults (100ms / 512 wheels) good for SMUS usage?
+        //timer = new HashedWheelTimer(5, TimeUnit.SECONDS); // @TODO: Are the defaults (100ms / 512 wheels) good for SMUS usage?
     }
 
     public ChannelPipeline getPipeline() throws Exception {
         // Create default pipeline from static method
-        ChannelPipeline pipeline = new SMUSPipeline(); // Channels.pipeline();
+        ChannelPipeline pipeline = new SMUSPipeline(channels.stream().findFirst().get()); // Channels.pipeline();
 
         if (idleTimeout > 0)
-            pipeline.addLast("idlehandler", new IdleStateHandler(timer, idleTimeout, 0, 0));
+            //pipeline.addLast("idlehandler", new IdleStateHandler(timer, idleTimeout, 0, 0));
+            pipeline.addLast("idlehandler", new IdleStateHandler(5, idleTimeout, 0, TimeUnit.SECONDS));
 
         if (allEncryptionEnabled) {
             pipeline.addLast("decryption", new DecryptionFramer()); // Handles upstream (incoming) messages
@@ -94,8 +92,8 @@ public class SMUSPipelineFactory implements ChannelPipelineFactory {
         pipeline.addLast("encoder", ENCODER);
 
         // It's not strictly necessary to use an executor, but will help prevent lag caused by slow/blocking business logic (e.g. server side scripts)
-        if (threadPoolSize > 0)
-            pipeline.addLast("executor", EXECUTOR);
+        //if (threadPoolSize > 0)
+        //    pipeline.addLast("executor", EXECUTOR);
         
         // Add business logic (upstream) ALSO INCLUDES decoder
         if (useUDP) {
@@ -117,5 +115,10 @@ public class SMUSPipelineFactory implements ChannelPipelineFactory {
         // floodMsgTolerance = tol;
         // floodMaxRepeat = repeat;
         MUSLog.Log("Flood filter parameters updated", MUSLog.kDeb);
+    }
+
+    @Override
+    protected void initChannel(Channel ch) throws Exception {
+        channels.add(ch);
     }
 }

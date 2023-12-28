@@ -29,10 +29,10 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
+import io.netty.buffer.ByteBuf;
 
-import java.io.*;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import java.net.*;
 
 /**
@@ -95,7 +95,7 @@ public class MUSMessage {
      /**
      * Constructor. Created a message from raw bytes.
      */
-     public MUSMessage(ChannelBuffer buf) {
+     public MUSMessage(ByteBuf buf) {
          this.extractMUSMessage(buf);
      }
 
@@ -104,7 +104,7 @@ public class MUSMessage {
      */
     public MUSMessage(MUSMessage msg) {
         // byte[] raw = msg.getBytes().toByteBuffer().array();
-        ChannelBuffer raw = msg.getBytes();
+        ByteBuf raw = msg.getBytes();
         raw.readerIndex(6); // Forward past the header bytes
         extractMUSMessage(raw);
         // TODO: Replace the m_senderID here if we want to skip reading the bytes
@@ -116,7 +116,7 @@ public class MUSMessage {
      */
     // (Only called directly for new message objects from the logoon handlers)
     // Other usages use the constructor instead.
-    public void extractMUSMessage(ChannelBuffer buf) {
+    public void extractMUSMessage(ByteBuf buf) {
 
         byte[] m_rawContents = readRawBytes(buf);
 
@@ -135,7 +135,7 @@ public class MUSMessage {
     /**
      * Reserved for internal use of OpenSMUS.
      */
-    byte[] readRawBytes(ChannelBuffer msg) {
+    byte[] readRawBytes(ByteBuf msg) {
 
         m_errCode = msg.readInt();
         m_timeStamp = msg.readInt();
@@ -202,7 +202,7 @@ public class MUSMessage {
     /**
      * Reserved for internal use of OpenSMUS.
      */
-    public ChannelBuffer getBytes() {
+    public ByteBuf getBytes() {
 
         byte[] subjectBytes = m_subject.getBytes();
         byte[] senderBytes = m_senderID.getBytes();
@@ -210,7 +210,7 @@ public class MUSMessage {
         byte[] contentBytes = m_msgContent.getBytes();
 
         int contentSize = 8 + subjectBytes.length + senderBytes.length + recptBytes.length + contentBytes.length; // +8 = errorCode & timeStamp
-        ChannelBuffer buffer = ChannelBuffers.buffer(6 + contentSize);
+        ByteBuf buffer = Unpooled.buffer(6 + contentSize);
 
         buffer.writeBytes(MUSMessage.m_header);
         buffer.writeInt(contentSize);

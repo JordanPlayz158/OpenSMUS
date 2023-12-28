@@ -29,7 +29,7 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 import java.util.*;
 import java.io.*;
@@ -101,7 +101,7 @@ public class MUSMsgHeaderStringList {
     /**
      * Reserved for internal use of OpenSMUS.
      */
-    public void extractMUSMsgHeaderStringList(ChannelBuffer buffer) {
+    public void extractMUSMsgHeaderStringList(ByteBuf buffer) {
 
         int numStrings = buffer.readInt();
         MUSMsgHeaderString tempStr;

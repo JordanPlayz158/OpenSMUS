@@ -29,19 +29,25 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.channel.socket.DatagramChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioDatagramChannelFactory;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
+//import io.netty.channel.socket.DatagramChannelFactory;
+//import io.netty.channel.socket.nio.NioDatagramChannelFactory;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.ChannelPipeline;
+//import io.netty.bootstrap.ConnectionlessBootstrap;
 
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
+//import java.util.concurrent.Executors;
 import java.text.*;
 
+import java.util.concurrent.Executors;
 import net.sf.opensmus.io.SMUSPipelineFactory;
 
 import static net.sf.opensmus.ServerUserDatabase.*;
@@ -49,18 +55,18 @@ import static net.sf.opensmus.ServerUserDatabase.*;
 /////////////////////////////////////////////////////////////
 public class MUSServer implements ServerObject {
 
-    public final ConcurrentHashMap<String, MUSUser> m_clientlist = new ConcurrentHashMap<String, MUSUser>();
-    public final ConcurrentHashMap<String, MUSMovie> m_movielist = new ConcurrentHashMap<String, MUSMovie>();
+    public final ConcurrentHashMap<String, MUSUser> m_clientlist = new ConcurrentHashMap<>();
+    public final ConcurrentHashMap<String, MUSMovie> m_movielist = new ConcurrentHashMap<>();
 
     protected MUSServerLoginQueue m_loginqueue;
 
     // @TODO: These can be sets
-    protected final Vector<String> m_allowedmovieslist = new Vector<String>();
-    protected final Vector<String> m_disabledmovieslist = new Vector<String>();
-    protected final Vector<String> m_allowedmoviepathnames = new Vector<String>();
-    public final Vector<MUSConnectionPort> m_ports = new Vector<MUSConnectionPort>();
+    protected final Vector<String> m_allowedmovieslist = new Vector<>();
+    protected final Vector<String> m_disabledmovieslist = new Vector<>();
+    protected final Vector<String> m_allowedmoviepathnames = new Vector<>();
+    public final Vector<MUSConnectionPort> m_ports = new Vector<>();
 
-    public final LinkedHashMap<Integer, Long> recentIPs = new LinkedHashMap<Integer, Long>();
+    public final LinkedHashMap<Integer, Long> recentIPs = new LinkedHashMap<>();
 
     public MUSDBConnection m_dbConn;
     public MUSSQLConnection m_sqlConn;
@@ -90,9 +96,10 @@ public class MUSServer implements ServerObject {
 
     public int m_udpStartingPort = 1627;
     public String m_udpAddress = "default";
-    DatagramChannelFactory UDPFactory;
-    ConnectionlessBootstrap UDPBootstrap;
-    protected Vector<Integer> m_udpPortsInUse = new Vector<Integer>();
+    //DatagramChannelFactory UDPFactory;
+    //ConnectionlessBootstrap UDPBootstrap;
+    ServerBootstrap UDPBootstrap;
+    protected Vector<Integer> m_udpPortsInUse = new Vector<>();
     public ChannelGroup UDP_channels;
 
     public long in_bytes = 0;
@@ -168,17 +175,13 @@ public class MUSServer implements ServerObject {
         encryptionKey = m_props.getProperty("EncryptionKey");
         MUSBlowfishCypher.initGlobalBoxes(encryptionKey);
 
-        boolean dbenabled = false;
-        if (m_props.getIntProperty("EnableDatabaseCommands") == 1)
-            dbenabled = true;
+        boolean dbenabled = m_props.getIntProperty("EnableDatabaseCommands") == 1;
 
-        m_dbConn = new MUSDBConnection(this, dbenabled);
+      m_dbConn = new MUSDBConnection(this, dbenabled);
 
-        boolean sqlenabled = false;
-        if (m_props.getIntProperty("EnableSQLDatabase") == 1)
-            sqlenabled = true;
+        boolean sqlenabled = m_props.getIntProperty("EnableSQLDatabase") == 1;
 
-        m_sqlConn = new MUSSQLConnection(this, sqlenabled);
+      m_sqlConn = new MUSSQLConnection(this, sqlenabled);
 
         this.installLoginQueueing();
         this.installIdleChecker();
@@ -197,14 +200,24 @@ public class MUSServer implements ServerObject {
             // Netty Init UDP
             // http://www.adobe.com/support/director/multiuser/using_udp/using_udp02.html
 
-            UDPFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool());
-            UDPBootstrap = new ConnectionlessBootstrap(UDPFactory);
-            UDP_channels = new DefaultChannelGroup("UDP");
-            UDPBootstrap.setPipelineFactory(new SMUSPipelineFactory(this, UDP_channels, true));
-            UDPBootstrap.setOption("broadcast", "false");
-            UDPBootstrap.setOption("receiveBufferSize", m_props.getIntProperty("MaxUDPPacket"));
-            UDPBootstrap.setOption("sendBufferSize", m_props.getIntProperty("MaxUDPPacket"));
-            UDPBootstrap.setOption("reuseAddress", true);
+            // Old NETTY 3 Code
+            //UDPFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool());
+            //UDPBootstrap = new ConnectionlessBootstrap(UDPFactory);
+            //UDP_channels = new DefaultChannelGroup("UDP");
+            //UDPBootstrap.setPipelineFactory(new SMUSPipelineFactory(this, UDP_channels, true));
+            //UDPBootstrap.setOption("broadcast", "false");
+            //UDPBootstrap.setOption("receiveBufferSize", m_props.getIntProperty("MaxUDPPacket"));
+            //UDPBootstrap.setOption("sendBufferSize", m_props.getIntProperty("MaxUDPPacket"));
+            //UDPBootstrap.setOption("reuseAddress", true);
+
+            UDPBootstrap = new ServerBootstrap();
+            UDP_channels = new DefaultChannelGroup("UDP", GlobalEventExecutor.INSTANCE);
+            // Check if pipeline factory is now the same as channel factory
+            //UDPBootstrap.channelFactory(new SMUSPipelineFactory(this, UDP_channels, true));
+            UDPBootstrap.option(ChannelOption.SO_BROADCAST, false);
+            UDPBootstrap.option(ChannelOption.SO_RCVBUF, m_props.getIntProperty("MaxUDPPacket"));
+            UDPBootstrap.option(ChannelOption.SO_SNDBUF, m_props.getIntProperty("MaxUDPPacket"));
+            UDPBootstrap.option(ChannelOption.SO_REUSEADDR, true);
 
             // Get UDP address and starting port number
             String udpaddress = m_props.getProperty("UDPServerAddress");
@@ -271,11 +284,11 @@ public class MUSServer implements ServerObject {
 
         if (m_props.getIntProperty("EnableUDP") == 1) {
             UDP_channels.close().awaitUninterruptibly();
-            UDPFactory.releaseExternalResources();
+            //UDPFactory.releaseExternalResources();
         }
 
         // Make a copy of the ports list to avoid ConcurrentModificationException
-        List<MUSConnectionPort> connectionPorts = new ArrayList<MUSConnectionPort>(this.m_ports);
+        List<MUSConnectionPort> connectionPorts = new ArrayList<>(this.m_ports);
         for (MUSConnectionPort mcp : connectionPorts) {
             mcp.killConnectionPort();
         }
@@ -521,7 +534,7 @@ public class MUSServer implements ServerObject {
         // This is delicate: if the allowmovies list is NOT empty
         // we need to add the movie to the list, since it is used as
         // the control method for movie authorization
-        if (m_allowedmovieslist.size() > 0)
+        if (!m_allowedmovieslist.isEmpty())
             m_allowedmovieslist.addElement(mname);
 
         // Mark the movie instance, if it exists
@@ -645,7 +658,7 @@ public class MUSServer implements ServerObject {
             }
 
             // Check for empty or invalid userid
-            if (logmsg.m_userID.equals("") || logmsg.m_userID.equals("System")) {
+            if (logmsg.m_userID.isEmpty() || logmsg.m_userID.equals("System")) {
                 MUSLog.Log("Login error: invalid user id", MUSLog.kDeb);
                 oneUser.replyLogonError((MUSLogonMessage) msg, MUSErrorCode.InvalidUserID);
                 oneUser.deleteUser();
@@ -814,7 +827,7 @@ public class MUSServer implements ServerObject {
 
             // Netty
             // Remove the handler used for processing the logon and replace it with a handler for normal messages.
-            ChannelPipeline pl = oneUser.channel.getPipeline();
+            ChannelPipeline pl = oneUser.channel.pipeline();
             pl.remove("logonhandler");
             pl.addLast("handler", SMUSPipelineFactory.HANDLER);
 
@@ -828,9 +841,7 @@ public class MUSServer implements ServerObject {
                     try {
                         int userid = authdb.getDBUser(logmsg.m_userID.toUpperCase());
                         authdb.updateUserLastLoginTime(userid);
-                    } catch (UserNotFoundException dbe) {
-                    } catch (DBException dbe) {
-                    }
+                    } catch (UserNotFoundException | DBException ignored) {}
                 }
             }
 
@@ -959,8 +970,7 @@ public class MUSServer implements ServerObject {
         try {
             MUSMovie mov = getMovie(moviename);
             removeMovie(mov);
-        } catch (MovieNotFoundException mnf) {
-        }
+        } catch (MovieNotFoundException ignored) {}
     }
 
     public int serverMovieCount() {
@@ -1034,11 +1044,9 @@ public class MUSServer implements ServerObject {
         if (this.doesServerLogging()) {
 
         	try {
-                boolean appendToLog = true;
-                if (m_props.getIntProperty("ClearLogAtStartup") == 1)
-                    appendToLog = false;
+                boolean appendToLog = m_props.getIntProperty("ClearLogAtStartup") != 1;
 
-                PrintStream stdout = new PrintStream(
+            PrintStream stdout = new PrintStream(
                 		new BufferedOutputStream(new FileOutputStream(m_props.getProperty("LogFileName"), appendToLog), 128), true);
                 System.setOut(stdout);
             } 
@@ -1053,24 +1061,21 @@ public class MUSServer implements ServerObject {
      * and closing the server log file
      */
     private void deinstallServerLogging() {
-    	
     	if (this.doesServerLogging()) {
-    		
-    		PrintStream serverLoggingStream = System.out;
-    		if (serverLoggingStream != null)
-    			serverLoggingStream.close();
-    		
-            PrintStream stdout = new PrintStream(
-            		new BufferedOutputStream(new FileOutputStream(FileDescriptor.out), 128), true);
-            System.setOut(stdout);
-    	}
+          PrintStream serverLoggingStream = System.out;
+          if (serverLoggingStream != null)
+              serverLoggingStream.close();
+
+          PrintStream stdout = new PrintStream(
+                  new BufferedOutputStream(new FileOutputStream(FileDescriptor.out), 128), true);
+          System.setOut(stdout);
+      }
     }
     
     /**
      * @return
      */
     public final boolean doesServerLogging() {
-    	
     	return this.m_props.getIntProperty("ServerOutputToLogFile") == 1;
     }
 } 

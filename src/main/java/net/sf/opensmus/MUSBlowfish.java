@@ -46,7 +46,7 @@
 
 package net.sf.opensmus;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 public class MUSBlowfish {
 
@@ -100,13 +100,13 @@ public class MUSBlowfish {
     }
 
     // Not used
-    public void decode(ChannelBuffer data) {
+    public void decode(ByteBuf data) {
 
         cipher.decrypt(data, data.readableBytes());
     }
 
 
-    public void decode(ChannelBuffer data, int length) {
+    public void decode(ByteBuf data, int length) {
 
         try {
 
@@ -119,7 +119,7 @@ public class MUSBlowfish {
 
 
     // Used to encrypt outgoing messages
-    public void encode(ChannelBuffer data) {
+    public void encode(ByteBuf data) {
 
         cipher.encrypt(data);
         cipher.reset(); // Always reset since we're only using this for complete outgoing messages
@@ -134,7 +134,6 @@ public class MUSBlowfish {
     // Used to encrypt outgoing messages
     // NOT USED ANYMORE
     public void encode(byte[] data) {
-
         try {
             // Align to the next 8 byte border
             int originalLength = data.length;
@@ -159,6 +158,5 @@ public class MUSBlowfish {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }

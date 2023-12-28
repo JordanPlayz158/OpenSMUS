@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  */
 
 plugins {
+    id("com.github.johnrengelman.shadow") version "8.1.1"
     `java-library`
     `maven-publish`
     kotlin("jvm")
@@ -25,11 +26,17 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
 
-    api(libs.org.jboss.netty.netty)
+    api(libs.io.netty.netty.all)
     runtimeOnly(libs.hsqldb.hsqldb)
 
 
     testImplementation(kotlin("test"))
+}
+
+tasks.shadowJar {
+    manifest.attributes.apply {
+        put("Main-Class", "net.sf.opensmus.OpenSMUS")
+    }
 }
 
 tasks.test {
@@ -49,9 +56,9 @@ publishing {
 }
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
-    jvmTarget = "1.8"
+    jvmTarget = "21"
 }
 val compileTestKotlin: KotlinCompile by tasks
 compileTestKotlin.kotlinOptions {
-    jvmTarget = "1.8"
+    jvmTarget = "21"
 }
