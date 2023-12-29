@@ -990,7 +990,7 @@ public class MUSMovie implements ServerMovie {
             user.sendMessage(onereply);
           }
         } else if (args[2].equalsIgnoreCase("getUserCount")) {
-          try {
+          //try {
             for (int e = 0; e < contlist.count(); e++) {
               LString movname = (LString) contlist.getElementAt(e);
               MUSMovie thismov;
@@ -1009,9 +1009,9 @@ public class MUSMovie implements ServerMovie {
               }
               user.sendMessage(onereply);
             }
-          } catch (GroupNotFoundException gnf) {
+          /*} catch (GroupNotFoundException gnf) {
             // Should not happen, we are querying for the allusers group
-          }
+          }*/
         }
 
         // OpenSMUS specific
