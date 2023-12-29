@@ -8,19 +8,19 @@ import kotlin.jvm.Throws
 
 class TestCaseMUSServer {
 
-	@Test
-	@Throws(InterruptedException::class)
-	fun testMUSServerCreation() {
-		val props = MUSServerProperties()
-		props.m_props.setProperty("LogDebugExtInformation", "1")
+    @Test
+    @Throws(InterruptedException::class)
+    fun testMUSServerCreation() {
+        val props = MUSServerProperties()
+        props.m_props.setProperty("LogDebugExtInformation", "1")
 
-		val serverInstance = MUSServer(props)
-		assertNotNull(serverInstance)
+        val serverInstance = MUSServer(props)
+        assertNotNull(serverInstance)
 
-		//Thread.sleep(10000)
+        //Thread.sleep(10000)
 
-		serverInstance.killServer()
-	}
+        serverInstance.killServer()
+    }
 
     companion object {
         @JvmStatic

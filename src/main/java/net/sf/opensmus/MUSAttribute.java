@@ -29,102 +29,98 @@
 
 package net.sf.opensmus;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * This class represents a multiuser server Attribute, consisting of a name and a value.
  */
 public class MUSAttribute {
 
-    private LSymbol m_name;
-    private LValue m_value;
+  private final LSymbol name;
+  private LValue value;
 
-    /**
-     * Constructor
-     */
-    public MUSAttribute(LSymbol name, LValue value) {
-        m_name = name;
-        m_value = value;
-    }
+  /**
+   * Constructor
+   */
+  public MUSAttribute(LSymbol name, LValue value) {
+    this.name = name;
+    this.value = value;
+  }
 
-    /**
-     * Update the LValue associated with the attribute
-     */
-    public void set(LValue value) {
-        m_value = value;
-    }
+  /**
+   * Static utility function.
+   * Reserved for internal use of OpenSMUS.
+   */
+  public static LValue getTime() {
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSSSSS");
+    Date currentTime = new Date();
+    String dateString = formatter.format(currentTime);
+    return new LString(dateString);
+  }
 
-    /**
-     * Retrieve the LValue associated with the attribute
-     */
-    public LValue get() {
-        return m_value;
-    }
+  /**
+   * Static utility function.
+   * Reserved for internal use of OpenSMUS.
+   */
+  public static void getSymbolListFromContents(LList attrlist, LValue attributes) {
+    if (attributes.getType() == LValue.vt_List) {
+      LList atlist = (LList) attributes;
+      for (int e = 0; e < atlist.count(); e++) {
+        getSymbolListFromContents(attrlist, atlist.getElementAt(e));
+      }
+    } else if (attributes.getType() == LValue.vt_Symbol) {
+      attrlist.addElement(attributes);
+    } else if (attributes.getType() == LValue.vt_String) {
+      LString elstring = (LString) attributes;
+      attrlist.addElement(new LSymbol(elstring.toString()));
+    }/* else {
+      // Ignore this attribute silently
+    }*/
+  }
 
-    /**
-     * Get the attribute name as an LSymbol
-     */
-    public LSymbol getName() {
-        return m_name;
-    }
-
-    /**
-     * Static utility function.
-     * Reserved for internal use of OpenSMUS.
-     */
-    public static LValue getTime() {
-
-        java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSSSSS");
-        java.util.Date currentTime = new java.util.Date();
-        String dateString = formatter.format(currentTime);
-        return new LString(dateString);
-    }
-
-    /**
-     * Static utility function.
-     * Reserved for internal use of OpenSMUS.
-     */
-    public static void getSymbolListFromContents(LList attrlist, LValue attributes) {
-
-        if (attributes.getType() == LValue.vt_List) {
-            LList atlist = (LList) attributes;
-            for (int e = 0; e < atlist.count(); e++) {
-                getSymbolListFromContents(attrlist, atlist.getElementAt(e));
-            }
-        } else if (attributes.getType() == LValue.vt_Symbol) {
-            attrlist.addElement(attributes);
-        } else if (attributes.getType() == LValue.vt_String) {
-            LString elstring = (LString) attributes;
-            attrlist.addElement(new LSymbol(elstring.toString()));
-        } else {
-            // Ignore this attribute silently
-
+  /**
+   * Static utility function.
+   * Reserved for internal use of OpenSMUS.
+   */
+  public static void getSetAttributeListsFromContents(LList attrlist, LList vallist, LValue attributes) {
+    if (attributes.getType() == LValue.vt_PropList) {
+      LPropList atlist = (LPropList) attributes;
+      for (int e = 0; e < atlist.count(); e++) {
+        LValue thisprop = atlist.getPropAt(e);
+        if (thisprop.getType() == LValue.vt_Symbol) {
+          LSymbol tp = (LSymbol) thisprop;
+          attrlist.addElement(tp);
+          vallist.addElement(atlist.getElementAt(e));
+        } else if (thisprop.getType() == LValue.vt_String) {
+          LString ts = (LString) thisprop;
+          attrlist.addElement(new LSymbol(ts.toString()));
+          vallist.addElement(atlist.getElementAt(e));
         }
-    }
+      }
+    }/* else {
+      // Ignore this attribute silently
+    }*/
+  }
 
-    /**
-     * Static utility function.
-     * Reserved for internal use of OpenSMUS.
-     */
-    public static void getSetAttributeListsFromContents(LList attrlist, LList vallist, LValue attributes) {
+  /**
+   * Update the LValue associated with the attribute
+   */
+  public void set(LValue value) {
+    this.value = value;
+  }
 
-        if (attributes.getType() == LValue.vt_PropList) {
-            LPropList atlist = (LPropList) attributes;
-            for (int e = 0; e < atlist.count(); e++) {
-                LValue thisprop = atlist.getPropAt(e);
-                if (thisprop.getType() == LValue.vt_Symbol) {
-                    LSymbol tp = (LSymbol) thisprop;
-                    attrlist.addElement(tp);
-                    vallist.addElement(atlist.getElementAt(e));
-                } else if (thisprop.getType() == LValue.vt_String) {
-                    LString ts = (LString) thisprop;
-                    attrlist.addElement(new LSymbol(ts.toString()));
-                    vallist.addElement(atlist.getElementAt(e));
-                }
-            }
-        } else {
-            // Ignore this attribute silently
+  /**
+   * Retrieve the LValue associated with the attribute
+   */
+  public LValue get() {
+    return value;
+  }
 
-        }
-
-    }
-
+  /**
+   * Get the attribute name as an LSymbol
+   */
+  public LSymbol getName() {
+    return name;
+  }
 }

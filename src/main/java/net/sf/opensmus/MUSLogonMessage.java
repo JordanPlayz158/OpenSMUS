@@ -33,119 +33,116 @@ import io.netty.buffer.ByteBuf;
 
 public class MUSLogonMessage extends MUSMessage {
 
-    private static final LSymbol MOVIEID = new LSymbol("!movieID");
-    private static final LSymbol USERID = new LSymbol("!userID");
-    private static final LSymbol PASSWORD = new LSymbol("!password");
-    private static final LSymbol PATHNAME = new LSymbol("!pathname");
-    private static final LSymbol LOGON = new LSymbol("!Logon");
-    private static final LSymbol UDPPORT = new LSymbol("!udpport");
-    private static final LSymbol LOCALADDRESS = new LSymbol("!localaddress");
+  private static final LSymbol MOVIEID = new LSymbol("!movieID");
+  private static final LSymbol USERID = new LSymbol("!userID");
+  private static final LSymbol PASSWORD = new LSymbol("!password");
+  private static final LSymbol PATHNAME = new LSymbol("!pathname");
+  private static final LSymbol LOGON = new LSymbol("!Logon");
+  private static final LSymbol UDPPORT = new LSymbol("!udpport");
+  private static final LSymbol LOCALADDRESS = new LSymbol("!localaddress");
+  private final MUSBlowfish m_cipher; // Only used to decrypt the logon contents
+  public String m_moviename;
+  public String m_userID;
+  public String m_password;
+  public String m_pathname = "default";
+  public LValue m_logon = new LVoid();
+  public LValue m_localUDPPortInfo = new LVoid();
+  public LValue m_localAddressInfo = new LVoid();
+  String m_localUDPAddress;
+  int m_localUDPPort;
+  int m_logonPacketFormat = 0; // 0 = old style (list with 3 items), 1 = SMUS 3 style (property list)
 
-    public String m_moviename;
-    public String m_userID;
-    public String m_password;
-    public String m_pathname = "default";
-    public LValue m_logon = new LVoid();
-    public LValue m_localUDPPortInfo = new LVoid();
-    public LValue m_localAddressInfo = new LVoid();
-    String m_localUDPAddress;
-    int m_localUDPPort;
+  public MUSLogonMessage() {
+    super();
+    m_cipher = new MUSBlowfish();
+  }
 
-    private final MUSBlowfish m_cipher; // Only used to decrypt the logon contents
+  @Override
+  public void extractMUSMessage(ByteBuf msg) {
 
-    int m_logonPacketFormat = 0; // 0 = old style (list with 3 items), 1 = SMUS 3 style (property list)
+    byte[] rawContents = readRawBytes(msg);
 
-    public MUSLogonMessage() {
-        super();
-        m_cipher = new MUSBlowfish();
-    }
+    // Only for Login messages: decrypt the content
+    m_cipher.decode(rawContents);
 
-    @Override
-    public void extractMUSMessage(ByteBuf msg) {
-
-        byte[] rawContents = readRawBytes(msg);
-
-        // Only for Login messages: decrypt the content
-        m_cipher.decode(rawContents);
-
-        m_msgContent = LValue.fromRawBytes(rawContents, 0);
-    }
+    m_msgContent = LValue.fromRawBytes(rawContents, 0);
+  }
 
 
-    public boolean extractLoginInfo() {
+  public boolean extractLoginInfo() {
 
-        LValue info = m_msgContent;
+    LValue info = m_msgContent;
 
-        if (info.getType() == LValue.vt_List) {
-            // Original login package format
-            LList loginfo = (LList) info;
-            LString moviename = (LString) loginfo.getElementAt(0);
-            m_moviename = moviename.toString();
+    if (info.getType() == LValue.vt_List) {
+      // Original login package format
+      LList loginfo = (LList) info;
+      LString moviename = (LString) loginfo.getElementAt(0);
+      m_moviename = moviename.toString();
 
-            LString userID = (LString) loginfo.getElementAt(1);
-            m_userID = userID.toString();
+      LString userID = (LString) loginfo.getElementAt(1);
+      m_userID = userID.toString();
 
-            LString pass = (LString) loginfo.getElementAt(2);
-            m_password = pass.toString();
+      LString pass = (LString) loginfo.getElementAt(2);
+      m_password = pass.toString();
 
-            return true;
-        } else if (info.getType() == LValue.vt_PropList) {
-            // New format
-            m_logonPacketFormat = 1;
-            LPropList ploginfo = (LPropList) info;
+      return true;
+    } else if (info.getType() == LValue.vt_PropList) {
+      // New format
+      m_logonPacketFormat = 1;
+      LPropList ploginfo = (LPropList) info;
 
-            try {
-                LString moviename = (LString) ploginfo.getElement(MOVIEID);
-                m_moviename = moviename.toString();
+      try {
+        LString moviename = (LString) ploginfo.getElement(MOVIEID);
+        m_moviename = moviename.toString();
 
-                LString userID = (LString) ploginfo.getElement(USERID);
-                m_userID = userID.toString();
+        LString userID = (LString) ploginfo.getElement(USERID);
+        m_userID = userID.toString();
 
-                LString pass = (LString) ploginfo.getElement(PASSWORD);
-                m_password = pass.toString();
-            } catch (PropertyNotFoundException pnf) {
-                // FatalError
-                return false;
-            }
-
-            try {
-                LString pathname = (LString) ploginfo.getElement(PATHNAME);
-                MUSLog.Log("Logon req from " + pathname.toString(), MUSLog.kDebWarn);
-                m_pathname = pathname.toString();
-            } catch (PropertyNotFoundException pnf) {
-                // Optional property
-            }
-
-            try {
-                m_logon = ploginfo.getElement(LOGON);  // What is this used for?
-            } catch (PropertyNotFoundException pnf) {
-                // Optional property
-            }
-
-            try {
-                m_localUDPPortInfo = ploginfo.getElement(UDPPORT); // The client wants to use UDP
-                if (m_localUDPPortInfo.getType() == LValue.vt_Integer) {
-                    LInteger m_localUDPPortInt = (LInteger) m_localUDPPortInfo;
-                    m_localUDPPort = m_localUDPPortInt.toInteger();
-                }
-            } catch (PropertyNotFoundException pnf) {
-                // Optional property
-            }
-
-            try {
-                m_localAddressInfo = ploginfo.getElement(LOCALADDRESS);
-                if (m_localAddressInfo.getType() == LValue.vt_String) {
-                    m_localUDPAddress = m_localAddressInfo.toString();
-                }
-            } catch (PropertyNotFoundException pnf) {
-                // Optional property
-            }
-
-            return true;
-        } // End proplist package
-
-        // Unknown content for list
+        LString pass = (LString) ploginfo.getElement(PASSWORD);
+        m_password = pass.toString();
+      } catch (PropertyNotFoundException pnf) {
+        // FatalError
         return false;
+      }
 
-    }
+      try {
+        LString pathname = (LString) ploginfo.getElement(PATHNAME);
+        MUSLog.Log("Logon req from " + pathname.toString(), MUSLog.kDebWarn);
+        m_pathname = pathname.toString();
+      } catch (PropertyNotFoundException pnf) {
+        // Optional property
+      }
+
+      try {
+        m_logon = ploginfo.getElement(LOGON);  // What is this used for?
+      } catch (PropertyNotFoundException pnf) {
+        // Optional property
+      }
+
+      try {
+        m_localUDPPortInfo = ploginfo.getElement(UDPPORT); // The client wants to use UDP
+        if (m_localUDPPortInfo.getType() == LValue.vt_Integer) {
+          LInteger m_localUDPPortInt = (LInteger) m_localUDPPortInfo;
+          m_localUDPPort = m_localUDPPortInt.toInteger();
+        }
+      } catch (PropertyNotFoundException pnf) {
+        // Optional property
+      }
+
+      try {
+        m_localAddressInfo = ploginfo.getElement(LOCALADDRESS);
+        if (m_localAddressInfo.getType() == LValue.vt_String) {
+          m_localUDPAddress = m_localAddressInfo.toString();
+        }
+      } catch (PropertyNotFoundException pnf) {
+        // Optional property
+      }
+
+      return true;
+    } // End proplist package
+
+    // Unknown content for list
+    return false;
+
+  }
 }

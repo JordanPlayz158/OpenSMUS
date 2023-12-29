@@ -31,78 +31,73 @@ package net.sf.opensmus;
 
 
 /**
- *	
  *
  */
 public final class MUSServerStatusLogger extends Thread {
-	
-	/**
-	 * Minimum 30 seconds between idle checks
-	 */
-	public static final int MINIMUM_DELAY_INSECONDS = 30;
-	
-    private final MUSServer server;
-    
-    private final int interval;
-    
-    private final int logLevel = MUSLog.kSrv;
 
-    /**
-     * @param svr
-     * @param winterval
-     */
-    public MUSServerStatusLogger(final MUSServer svr, int winterval) {
-    	
-    	super("ServerStatusLoggerThread");
-    	
-        this.server = svr;
-        this.interval = winterval > MINIMUM_DELAY_INSECONDS ? winterval : MINIMUM_DELAY_INSECONDS;
-        
-        if (svr == null)
-        	throw new IllegalArgumentException("Parameter 'svr' must not be null");
+  /**
+   * Minimum 30 seconds between idle checks
+   */
+  public static final int MINIMUM_DELAY_INSECONDS = 30;
+
+  private final MUSServer server;
+
+  private final int interval;
+
+  /**
+   */
+  public MUSServerStatusLogger(final MUSServer svr, int winterval) {
+
+    super("ServerStatusLoggerThread");
+
+    this.server = svr;
+    this.interval = Math.max(winterval, MINIMUM_DELAY_INSECONDS);
+
+    if (svr == null)
+      throw new IllegalArgumentException("Parameter 'svr' must not be null");
+  }
+
+  /* (non-Javadoc)
+   * @see java.lang.Thread#run()
+   */
+  @Override
+  public void run() {
+
+    try {
+      while (this.server.m_alive) {
+
+        // Log the traffic statistics of the server
+        this.logServerStatus(">Server state at " + server.timeString() + " \n  " + server.m_clientlist.size() + " users connected");
+        this.logServerStatus(" >Traffic since last state report: \n  in - " + server.in_bytes + " bytes\n  out - " + server.out_bytes + " bytes");
+        this.logServerStatus(" >Messages since last state report: \n  in - " + server.in_msg + " msgs\n  out - " + server.out_msg + " msgs\n  discarded - " + server.drop_msg + " msgs");
+
+        // Clear the traffic statistics of the server
+        this.resetServerTrafficStatistics();
+
+        server.ensureThreadsAreAlive();
+
+        Thread.sleep(this.interval * 1000);
+      }
+    } catch (InterruptedException e) {
+      // TODO Why error. Will be issued by server shutdown
+      MUSLog.Log("ServerStatusLogger Error!", MUSLog.kDeb);
+
+      // Dont swallow interrupt exceptions
+      Thread.currentThread().interrupt();
     }
+  }
 
-    /* (non-Javadoc)
-     * @see java.lang.Thread#run()
-     */
-    @Override
-    public void run() {
-    	
-        try {
-            while (this.server.m_alive) {
+  private void logServerStatus(final String logMessage) {
+    int logLevel = MUSLog.kSrv;
+    MUSLog.Log(logMessage, logLevel);
+  }
 
-            	// Log the traffic statistics of the server
-                this.logServerStatus(">Server state at " + server.timeString() + " \n  " + server.m_clientlist.size() + " users connected");
-                this.logServerStatus(" >Traffic since last state report: \n  in - " + server.in_bytes + " bytes\n  out - " + server.out_bytes + " bytes");
-                this.logServerStatus(" >Messages since last state report: \n  in - " + server.in_msg + " msgs\n  out - " + server.out_msg + " msgs\n  discarded - " + server.drop_msg + " msgs");
-                
-                // Clear the traffic statistics of the server
-                this.resetServerTrafficStatistics();
+  private void resetServerTrafficStatistics() {
 
-                server.ensureThreadsAreAlive();
-
-                Thread.sleep(this.interval * 1000);
-            }
-        }
-        catch (InterruptedException e) {
-        	// TODO Why error. Will be issued by server shutdown
-            MUSLog.Log("ServerStatusLogger Error!", MUSLog.kDeb);
-            
-            // Dont swallow interrupt exceptions
-            Thread.currentThread().interrupt();
-        }
-    }
-    
-    private void logServerStatus(final String logMessage) {
-    	MUSLog.Log(logMessage, this.logLevel);
-    }
-    
-    private void resetServerTrafficStatistics() {
-    	
-        server.in_bytes = 0;
-        server.out_bytes = 0;
-        server.in_msg = 0;
-        server.out_msg = 0;
-        server.drop_msg = 0;
-   }
+    server.in_bytes = 0;
+    server.out_bytes = 0;
+    server.in_msg = 0;
+    server.out_msg = 0;
+    server.drop_msg = 0;
+  }
 }

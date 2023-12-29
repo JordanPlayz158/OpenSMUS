@@ -30,7 +30,7 @@
 package net.sf.opensmus;
 
 public class PropertyNotFoundException extends Exception implements java.io.Serializable {
-    public PropertyNotFoundException(String msg) {
-        super("Property not found: " + msg);
-    }
+  public PropertyNotFoundException(String msg) {
+    super("Property not found: " + msg);
+  }
 }

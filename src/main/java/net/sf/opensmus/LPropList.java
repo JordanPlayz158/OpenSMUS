@@ -29,8 +29,11 @@
 
 package net.sf.opensmus;
 
-import java.util.*;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Vector;
 
 /**
  * Class representing a Lingo compatible List value (LList for short).
@@ -38,321 +41,219 @@ import java.io.*;
  */
 public class LPropList extends LValue {
 
-    /**
-     * Public vector element storing the property names as LSymbols
-     */
-    public Vector<LValue> m_proplist;
-    /**
-     * Public vector element storing the list members as LValues
-     */
-    public Vector<LValue> m_list;
+  /**
+   * Public vector element storing the property names as LSymbols
+   */
+  public final Vector<LValue> m_proplist;
+  /**
+   * Public vector element storing the list members as LValues
+   */
+  public final Vector<LValue> m_list;
 
-    /**
-     * Constructor
-     */
-    public LPropList() {
-        m_proplist = new Vector<LValue>();
-        m_list = new Vector<LValue>();
-        setType(LValue.vt_PropList);
+  /**
+   * Constructor
+   */
+  public LPropList() {
+    m_proplist = new Vector<>();
+    m_list = new Vector<>();
+    setType(LValue.vt_PropList);
+  }
+
+  /**
+   * Adds an LValue element to the list
+   *
+   * @param property LSymbol with property name
+   * @param elem     LValue to add
+   */
+  public void addElement(LValue property, LValue elem) {
+    m_proplist.addElement(property);
+    m_list.addElement(elem);
+  }
+
+
+  /**
+   * Fetches an LValue element from the list
+   *
+   * @param pos index of the element to be retrieved
+   * @return LValue
+   */
+  public LValue getElementAt(int pos) {
+    return m_list.elementAt(pos);
+  }
+
+  /**
+   * Fetches an LValue property name from the list
+   *
+   * @param pos index of the property to be retrieved
+   * @return LValue
+   */
+  public LValue getPropAt(int pos) {
+    return m_proplist.elementAt(pos);
+  }
+
+  /**
+   * Fetches an LValue element from the list
+   *
+   * @param prop LSymbol representing the property name
+   * @return LValue
+   */
+  public LValue getElement(LSymbol prop) throws PropertyNotFoundException {
+
+    // Enumeration enume = m_proplist.elements();
+    int idx = 0;
+    // LValue elem;
+    // while (enume.hasMoreElements()) {
+    for (LValue elem : m_proplist) {
+      // elem = (LValue) enume.nextElement();
+      if (elem.getType() != LValue.vt_Symbol) continue;
+      LSymbol sym = (LSymbol) elem;
+      if (prop.toString().equalsIgnoreCase(sym.toString())) {
+        return m_list.elementAt(idx);
+      }
+      idx++;
     }
 
-    /**
-     * Adds an LValue element to the list
-     *
-     * @param property LSymbol with property name
-     * @param elem     LValue to add
-     * @return boolean
-     */
-    public boolean addElement(LValue property, LValue elem) {
-        m_proplist.addElement(property);
-        m_list.addElement(elem);
+    // return new LVoid();
+    throw new PropertyNotFoundException(prop.toString());
+  }
 
-        return true;
+  /**
+   * Returns the number of elements in the list
+   */
+  public int count() {
+    return m_proplist.size();
+  }
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public int extractFromBytes(byte[] rawBytes, int offset) {
+    int numOfElems = ConversionUtils.byteArrayToInt(rawBytes, offset);
+    int chunkSize = 4;
+    short elemType;
+    LValue newProp;
+    LValue newVal;
+    for (int i = 0; i < numOfElems; i++) {
+      // Extract prop
+      // Extract element type (should be symbol anyway) //corrected to accept any type
+      elemType = ConversionUtils.byteArrayToShort(rawBytes, offset + chunkSize);
+      chunkSize += 2;
+
+      newProp = switch (elemType) {
+        case LValue.vt_Integer -> new LInteger();
+        case LValue.vt_Symbol -> new LSymbol();
+        case LValue.vt_String -> new LString();
+        case LValue.vt_Picture -> new LPicture();
+        case LValue.vt_Float -> new LFloat();
+        case LValue.vt_List -> new LList();
+        case LValue.vt_Point -> new LPoint();
+        case LValue.vt_Rect -> new LRect();
+        case LValue.vt_PropList -> new LPropList();
+        case LValue.vt_Color -> new LColor();
+        case LValue.vt_Date -> new LDate();
+        case LValue.vt_Media -> new LMedia();
+        case LValue.vt_3dVector -> new L3dVector();
+        case LValue.vt_3dTransform -> new L3dTransform();
+        default -> new LVoid();
+      };
+
+      chunkSize = chunkSize + newProp.extractFromBytes(rawBytes, offset + chunkSize);
+      m_proplist.addElement(newProp);
+
+      // Extract element
+      elemType = ConversionUtils.byteArrayToShort(rawBytes, offset + chunkSize);
+      chunkSize += 2;
+
+      newVal = switch (elemType) {
+        case LValue.vt_Integer -> new LInteger();
+        case LValue.vt_Symbol -> new LSymbol();
+        case LValue.vt_String -> new LString();
+        case LValue.vt_Picture -> new LPicture();
+        case LValue.vt_Float -> new LFloat();
+        case LValue.vt_List -> new LList();
+        case LValue.vt_Point -> new LPoint();
+        case LValue.vt_Rect -> new LRect();
+        case LValue.vt_PropList -> new LPropList();
+        case LValue.vt_Color -> new LColor();
+        case LValue.vt_Date -> new LDate();
+        case LValue.vt_Media -> new LMedia();
+        case LValue.vt_3dVector -> new L3dVector();
+        case LValue.vt_3dTransform -> new L3dTransform();
+        default -> new LVoid();
+      };
+      chunkSize = chunkSize + newVal.extractFromBytes(rawBytes, offset + chunkSize);
+      m_list.addElement(newVal);
+
+    }
+    return chunkSize;
+  }
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public void dump() {
+
+    for (LValue temp : m_proplist) {
+      MUSLog.Log("proplist property: ", MUSLog.kDeb);
+      temp.dump();
     }
 
-
-    /**
-     * Fetches an LValue element from the list
-     *
-     * @param pos index of the element to be retrieved
-     * @return LValue
-     */
-    public LValue getElementAt(int pos) {
-        return m_list.elementAt(pos);
+    for (LValue temp : m_list) {
+      MUSLog.Log("proplist element: ", MUSLog.kDeb);
+      temp.dump();
     }
+  }
 
-    /**
-     * Fetches an LValue property name from the list
-     *
-     * @param pos index of the property to be retrieved
-     * @return LValue
-     */
-    public LValue getPropAt(int pos) {
-        return m_proplist.elementAt(pos);
+
+  @Override
+  public String toString() {
+
+    StringBuilder s = new StringBuilder("[");
+    for (int n = 0; n < m_proplist.size(); n++) {
+      s.append(m_proplist.get(n).toString());
+      s.append(": ");
+      s.append(m_list.get(n).toString());
+      s.append(", ");
     }
+    if (s.length() > 2) s.setLength(s.length() - 2);
+    s.append("]");
+    return s.toString();
+  }
 
-    /**
-     * Fetches an LValue element from the list
-     *
-     * @param prop LSymbol representing the property name
-     * @return LValue
-     */
-    public LValue getElement(LSymbol prop) throws PropertyNotFoundException {
 
-        // Enumeration enume = m_proplist.elements();
-        int idx = 0;
-        // LValue elem;
-        // while (enume.hasMoreElements()) {
-        for (LValue elem : m_proplist) {
-            // elem = (LValue) enume.nextElement();
-            if (elem.getType() != LValue.vt_Symbol) continue;
-            LSymbol sym = (LSymbol) elem;
-            if (prop.toString().equalsIgnoreCase(sym.toString())) {
-                return m_list.elementAt(idx);
-            }
-            idx++;
-        }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public byte[] getBytes() {
 
-        // return new LVoid();
-        throw new PropertyNotFoundException(prop.toString());
+    try {
+      ByteArrayOutputStream bstream = new ByteArrayOutputStream(2);
+      DataOutputStream datastream = new DataOutputStream(bstream);
+
+      datastream.writeShort(vt_PropList);
+      datastream.writeInt(m_proplist.size());
+
+      byte[] elemBytes;
+      LValue elem;
+      Enumeration<LValue> enume = m_proplist.elements();
+      Enumeration<LValue> enum2 = m_list.elements();
+      while (enume.hasMoreElements()) {
+        elem = enume.nextElement();
+        elemBytes = elem.getBytes();
+        datastream.write(elemBytes, 0, elemBytes.length);
+        elem = enum2.nextElement();
+        elemBytes = elem.getBytes();
+        datastream.write(elemBytes, 0, elemBytes.length);
+      }
+
+      return bstream.toByteArray();
+    } catch (IOException e) {
+      MUSLog.Log("Error in LPropList stream", MUSLog.kSys);
+      return "0".getBytes();
     }
-
-    /**
-     * Returns the number of elements in the list
-     */
-    public int count() {
-        return m_proplist.size();
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public int extractFromBytes(byte[] rawBytes, int offset) {
-        int numOfElems = ConversionUtils.byteArrayToInt(rawBytes, offset);
-        int chunkSize = 4;
-        int elemSize = 0;
-        short elemType = 0;
-        LValue newProp;
-        LValue newVal;
-        for (int i = 0; i < numOfElems; i++) {
-            // Extract prop
-            // Extract element type (should be symbol anyway) //corrected to accept any type
-            elemType = ConversionUtils.byteArrayToShort(rawBytes, offset + chunkSize);
-            chunkSize += 2;
-
-            switch (elemType) {
-                case LValue.vt_Void:
-                    newProp = new LVoid();
-                    break;
-
-                case LValue.vt_Integer:
-                    newProp = new LInteger();
-                    break;
-
-                case LValue.vt_Symbol:
-                    newProp = new LSymbol();
-                    break;
-
-                case LValue.vt_String:
-                    newProp = new LString();
-                    break;
-
-                case LValue.vt_Picture:
-                    newProp = new LPicture();
-                    break;
-
-                case LValue.vt_Float:
-                    newProp = new LFloat();
-                    break;
-
-                case LValue.vt_List:
-                    newProp = new LList();
-                    break;
-
-                case LValue.vt_Point:
-                    newProp = new LPoint();
-                    break;
-
-                case LValue.vt_Rect:
-                    newProp = new LRect();
-                    break;
-
-                case LValue.vt_PropList:
-                    newProp = new LPropList();
-                    break;
-
-                case LValue.vt_Color:
-                    newProp = new LColor();
-                    break;
-
-                case LValue.vt_Date:
-                    newProp = new LDate();
-                    break;
-
-                case LValue.vt_Media:
-                    newProp = new LMedia();
-                    break;
-
-                case LValue.vt_3dVector:
-                    newProp = new L3dVector();
-                    break;
-
-                case LValue.vt_3dTransform:
-                    newProp = new L3dTransform();
-                    break;
-
-                default:
-                    newProp = new LVoid();
-                    break;
-
-            }
-
-            chunkSize = chunkSize + newProp.extractFromBytes(rawBytes, offset + chunkSize);
-            m_proplist.addElement(newProp);
-
-            // Extract element
-            elemType = ConversionUtils.byteArrayToShort(rawBytes, offset + chunkSize);
-            chunkSize += 2;
-
-            switch (elemType) {
-                case LValue.vt_Void:
-                    newVal = new LVoid();
-                    break;
-
-                case LValue.vt_Integer:
-                    newVal = new LInteger();
-                    break;
-
-                case LValue.vt_Symbol:
-                    newVal = new LSymbol();
-                    break;
-
-                case LValue.vt_String:
-                    newVal = new LString();
-                    break;
-
-                case LValue.vt_Picture:
-                    newVal = new LPicture();
-                    break;
-
-                case LValue.vt_Float:
-                    newVal = new LFloat();
-                    break;
-
-                case LValue.vt_List:
-                    newVal = new LList();
-                    break;
-
-                case LValue.vt_Point:
-                    newVal = new LPoint();
-                    break;
-
-                case LValue.vt_Rect:
-                    newVal = new LRect();
-                    break;
-
-                case LValue.vt_PropList:
-                    newVal = new LPropList();
-                    break;
-
-                case LValue.vt_Color:
-                    newVal = new LColor();
-                    break;
-
-                case LValue.vt_Date:
-                    newVal = new LDate();
-                    break;
-
-                case LValue.vt_Media:
-                    newVal = new LMedia();
-                    break;
-
-                case LValue.vt_3dVector:
-                    newVal = new L3dVector();
-                    break;
-
-                case LValue.vt_3dTransform:
-                    newVal = new L3dTransform();
-                    break;
-
-                default:
-                    newVal = new LVoid();
-                    break;
-
-            }
-            chunkSize = chunkSize + newVal.extractFromBytes(rawBytes, offset + chunkSize);
-            m_list.addElement(newVal);
-
-        }
-        return chunkSize;
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public void dump() {
-
-        for (LValue temp : m_proplist) {
-            MUSLog.Log("proplist property: ", MUSLog.kDeb);
-            temp.dump();
-        }
-
-        for (LValue temp : m_list) {
-            MUSLog.Log("proplist element: ", MUSLog.kDeb);
-            temp.dump();
-        }
-    }
-
-
-    @Override
-    public String toString() {
-
-       StringBuffer s = new StringBuffer("[");
-       for (int n=0; n< m_proplist.size(); n++) {
-           s.append(m_proplist.get(n).toString());
-           s.append(": ");
-           s.append(m_list.get(n).toString());
-           s.append(", ");
-       }
-        if (s.length() > 2) s.setLength(s.length() -2);
-        s.append("]");
-       return s.toString();
-    }
-    
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public byte[] getBytes() {
-
-        try {
-            ByteArrayOutputStream bstream = new ByteArrayOutputStream(2);
-            DataOutputStream datastream = new DataOutputStream(bstream);
-
-            datastream.writeShort(vt_PropList);
-            datastream.writeInt(m_proplist.size());
-
-            byte[] elemBytes;
-            LValue elem;
-            Enumeration enume = m_proplist.elements();
-            Enumeration enum2 = m_list.elements();
-            while (enume.hasMoreElements()) {
-                elem = (LValue) enume.nextElement();
-                elemBytes = elem.getBytes();
-                datastream.write(elemBytes, 0, elemBytes.length);
-                elem = (LValue) enum2.nextElement();
-                elemBytes = elem.getBytes();
-                datastream.write(elemBytes, 0, elemBytes.length);
-            }
-
-            return bstream.toByteArray();
-        } catch (IOException e) {
-            MUSLog.Log("Error in LPropList stream", MUSLog.kSys);
-            return "0".getBytes();
-        }
-    }
+  }
 
 }

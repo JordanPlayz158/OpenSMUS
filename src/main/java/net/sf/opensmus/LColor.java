@@ -29,74 +29,74 @@
 
 package net.sf.opensmus;
 
-/** 
- *Class representing a Lingo compatible color value (LColor for short)
- *Color values are stored and retrieved as an opaque array of bytes
- *Lingo is a trademark of Adobe, Inc. All rights reserved.
+/**
+ * Class representing a Lingo compatible color value (LColor for short)
+ * Color values are stored and retrieved as an opaque array of bytes
+ * Lingo is a trademark of Adobe, Inc. All rights reserved.
  */
 public class LColor extends LValue {
 
-    private byte[] m_bytes;
+  private final byte[] bytes;
 
-    /**
-     * Constructor
-     */
-    public LColor(byte[] initbytes) {
-        m_bytes = initbytes;
-        setType(LValue.vt_Color);
-    }
+  /**
+   * Constructor
+   */
+  public LColor(byte[] initbytes) {
+    bytes = initbytes;
+    setType(LValue.vt_Color);
+  }
 
-    /**
-     * Constructor
-     */
-    public LColor() {
-        m_bytes = new byte[4];
-        setType(LValue.vt_Color);
-    }
+  /**
+   * Constructor
+   */
+  public LColor() {
+    bytes = new byte[4];
+    setType(LValue.vt_Color);
+  }
 
-    /**
-     * Returns the byte array storing the color data in binary format
-     */
-    @Override
-    public byte[] toBytes() {
-        return m_bytes;
-    }
+  /**
+   * Returns the byte array storing the color data in binary format
+   */
+  @Override
+  public byte[] toBytes() {
+    return bytes;
+  }
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public int extractFromBytes(byte[] rawBytes, int offset) {
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public int extractFromBytes(byte[] rawBytes, int offset) {
 
-        System.arraycopy(rawBytes, offset, m_bytes, 0, 4);
-        return 4;
-    }
+    System.arraycopy(rawBytes, offset, bytes, 0, 4);
+    return 4;
+  }
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public byte[] getBytes() {
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public byte[] getBytes() {
 
-        byte[] finalbytes = new byte[6];
-        ConversionUtils.shortToByteArray((int) vt_Color, finalbytes, 0);
-        // ConversionUtils.intToByteArray(m_bytes.length, finalbytes, 2);   // Removed by Rob, must be a bug.
-        System.arraycopy(m_bytes, 0, finalbytes, 2, m_bytes.length);
+    byte[] finalbytes = new byte[6];
+    ConversionUtils.shortToByteArray(vt_Color, finalbytes, 0);
+    // ConversionUtils.intToByteArray(m_bytes.length, finalbytes, 2);   // Removed by Rob, must be a bug.
+    System.arraycopy(bytes, 0, finalbytes, 2, bytes.length);
 
-        return finalbytes;
-    }
+    return finalbytes;
+  }
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public void dump() {
-        MUSLog.Log("Color> " + ConversionUtils.bytesToBinHex(m_bytes), MUSLog.kDeb);
-    }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public void dump() {
+    MUSLog.Log("Color> " + ConversionUtils.bytesToBinHex(bytes), MUSLog.kDeb);
+  }
 
-    @Override
-    public String toString() {
-        // Not entirely sure about the byte meanings here... rgb+a?
-        return ("color(" + m_bytes[0] + ", " + m_bytes[1] + ", " + m_bytes[2] +")");
-    }
+  @Override
+  public String toString() {
+    // Not entirely sure about the byte meanings here... rgb+a?
+    return ("color(" + bytes[0] + ", " + bytes[1] + ", " + bytes[2] + ")");
+  }
 }

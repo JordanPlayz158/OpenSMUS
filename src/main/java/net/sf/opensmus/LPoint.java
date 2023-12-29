@@ -35,122 +35,106 @@ package net.sf.opensmus;
  */
 public class LPoint extends LValue {
 
-    // private byte[] m_bytes;
+  // private byte[] m_bytes;
 
-    /**
-     * X Coordinate of the Point stored as an LValue. It can be an LInteger or an LFloat
-     */
-    public LValue m_X;
-    /**
-     * Y Coordinate of the Point stored as an LValue. It can be an LInteger or an LFloat
-     */
-    public LValue m_Y;
+  /**
+   * X Coordinate of the Point stored as an LValue. It can be an LInteger or an LFloat
+   */
+  public LValue m_X;
+  /**
+   * Y Coordinate of the Point stored as an LValue. It can be an LInteger or an LFloat
+   */
+  public LValue m_Y;
 
-    /**
-     * Constructor
-     */
-    public LPoint() {
-        setType(LValue.vt_Point);
+  /**
+   * Constructor
+   */
+  public LPoint() {
+    setType(LValue.vt_Point);
+  }
+
+  /**
+   * Constructor. 2 LValues representing the Lingo Point coordinates
+   */
+  public LPoint(LValue x, LValue y) {
+    m_X = x;
+    m_Y = y;
+    setType(LValue.vt_Point);
+  }
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public int extractFromBytes(byte[] rawBytes, int offset) {
+
+    short elemType;
+    LValue newVal;
+    int chunkSize = 0;
+    // First element X
+    {
+      elemType = ConversionUtils.byteArrayToShort(rawBytes, offset + chunkSize);
+      chunkSize = chunkSize + 2;
+
+      newVal = switch (elemType) {
+        case LValue.vt_Integer -> new LInteger();
+        case LValue.vt_Float -> new LFloat();
+        default -> new LVoid();
+      };
+
+      chunkSize = chunkSize + newVal.extractFromBytes(rawBytes, offset + chunkSize);
+      m_X = newVal;
     }
 
-    /**
-     * Constructor. 2 LValues representing the Lingo Point coordinates
-     */
-    public LPoint(LValue x, LValue y) {
-        m_X = x;
-        m_Y = y;
-        setType(LValue.vt_Point);
+    // Second element Y
+    {
+      elemType = ConversionUtils.byteArrayToShort(rawBytes, offset + chunkSize);
+      chunkSize = chunkSize + 2;
+
+      newVal = switch (elemType) {
+        case LValue.vt_Integer -> new LInteger();
+        case LValue.vt_Float -> new LFloat();
+        default -> new LVoid();
+      };
+
+      chunkSize = chunkSize + newVal.extractFromBytes(rawBytes, offset + chunkSize);
+      m_Y = newVal;
     }
+    return chunkSize;
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public int extractFromBytes(byte[] rawBytes, int offset) {
+  }
 
-        short elemType = 0;
-        LValue newVal;
-        int chunkSize = 0;
-        // First element X
-        {
-            elemType = ConversionUtils.byteArrayToShort(rawBytes, offset + chunkSize);
-            chunkSize = chunkSize + 2;
+  @Override
+  public String toString() {
 
-            switch (elemType) {
-                case LValue.vt_Integer:
-                    newVal = new LInteger();
-                    break;
+    return ("point(" + m_X + ", " + m_Y + ")");
+  }
 
-                case LValue.vt_Float:
-                    newVal = new LFloat();
-                    break;
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public void dump() {
+    MUSLog.Log("Point element: ", MUSLog.kDeb);
+    m_X.dump();
+    m_Y.dump();
 
-                default:
-                    newVal = new LVoid();
-                    break;
-            }
+  }
 
-            chunkSize = chunkSize + newVal.extractFromBytes(rawBytes, offset + chunkSize);
-            m_X = newVal;
-        }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public byte[] getBytes() {
+    byte[] pX = m_X.getBytes();
+    byte[] pY = m_Y.getBytes();
 
-        // Second element Y
-        {
-            elemType = ConversionUtils.byteArrayToShort(rawBytes, offset + chunkSize);
-            chunkSize = chunkSize + 2;
+    byte[] finalbytes = new byte[2 + pX.length + pY.length];
+    ConversionUtils.shortToByteArray(vt_Point, finalbytes, 0);
+    System.arraycopy(pX, 0, finalbytes, 2, pX.length);
+    System.arraycopy(pY, 0, finalbytes, 2 + pX.length, pY.length);
 
-            switch (elemType) {
-                case LValue.vt_Integer:
-                    newVal = new LInteger();
-                    break;
-
-                case LValue.vt_Float:
-                    newVal = new LFloat();
-                    break;
-
-                default:
-                    newVal = new LVoid();
-                    break;
-            }
-
-            chunkSize = chunkSize + newVal.extractFromBytes(rawBytes, offset + chunkSize);
-            m_Y = newVal;
-        }
-        return chunkSize;
-
-    }
-
-    @Override
-    public String toString() {
-
-        return ("point(" + m_X + ", " + m_Y + ")");
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public void dump() {
-        MUSLog.Log("Point element: ", MUSLog.kDeb);
-        m_X.dump();
-        m_Y.dump();
-
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public byte[] getBytes() {
-        byte[] pX = m_X.getBytes();
-        byte[] pY = m_Y.getBytes();
-
-        byte[] finalbytes = new byte[2 + pX.length + pY.length];
-        ConversionUtils.shortToByteArray((int) vt_Point, finalbytes, 0);
-        System.arraycopy(pX, 0, finalbytes, 2, pX.length);
-        System.arraycopy(pY, 0, finalbytes, 2 + pX.length, pY.length);
-
-        return finalbytes;
-    }
+    return finalbytes;
+  }
 
 }

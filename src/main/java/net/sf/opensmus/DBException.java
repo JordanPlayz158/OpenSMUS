@@ -30,7 +30,7 @@
 package net.sf.opensmus;
 
 public class DBException extends Exception implements java.io.Serializable {
-	public DBException(String msg) {
-		super(msg);
-	}
+  public DBException(String msg) {
+    super(msg);
+  }
 } 

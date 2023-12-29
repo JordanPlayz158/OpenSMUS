@@ -30,24 +30,24 @@
 package net.sf.opensmus;
 
 public class MUSKillServerTimer extends Thread {
-    private MUSServer m_server;
-    private int m_timeToKill;
+  private final MUSServer m_server;
+  private final int m_timeToKill;
 
-    public MUSKillServerTimer(MUSServer oneserver, int timeToKill) {
-        m_server = oneserver;
-        m_timeToKill = timeToKill;
-        start();
-    }
+  public MUSKillServerTimer(MUSServer oneserver, int timeToKill) {
+    m_server = oneserver;
+    m_timeToKill = timeToKill;
+    start();
+  }
 
-    @Override
-    public void run() {
-        try {
-            m_server.killServer();
-            sleep(m_timeToKill);
-            OpenSMUS.restart();
-        } catch (InterruptedException e) {
-            MUSLog.Log("KillServerTimer Error!", MUSLog.kDeb);
-        }
+  @Override
+  public void run() {
+    try {
+      m_server.killServer();
+      sleep(m_timeToKill);
+      OpenSMUS.restart();
+    } catch (InterruptedException e) {
+      MUSLog.Log("KillServerTimer Error!", MUSLog.kDeb);
     }
+  }
 }
 

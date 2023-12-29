@@ -30,7 +30,7 @@
 package net.sf.opensmus;
 
 public class AttributeNotFoundException extends Exception implements java.io.Serializable {
-	public AttributeNotFoundException(String msg) {
-		super(msg);
-	}
+  public AttributeNotFoundException(String msg) {
+    super(msg);
+  }
 } 

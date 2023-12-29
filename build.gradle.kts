@@ -47,7 +47,7 @@ group = "net.sf.opensmus"
 version = "2.0.0-SNAPSHOT"
 description = "OpenSMUS server"
 //java.sourceCompatibility = JavaVersion.VERSION_1_5
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.sourceCompatibility = JavaVersion.VERSION_21
 
 publishing {
     publications.create<MavenPublication>("maven") {

@@ -29,87 +29,89 @@
 
 package net.sf.opensmus;
 
-import java.net.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.Socket;
 
 public class MUSEmail extends Thread {
 
-    Socket socket;
-    PrintStream ps;
-    BufferedReader dis;
-    InetAddress rina;
-    InetAddress lina;
-    String m_sender;
-    String m_recpt;
-    String m_subject;
-    String m_smtphost;
-    String[] m_data;
+  Socket socket;
+  PrintStream ps;
+  BufferedReader dis;
+  InetAddress rina;
+  InetAddress lina;
+  final String m_sender;
+  final String m_recpt;
+  final String m_subject;
+  final String m_smtphost;
+  final String[] m_data;
 
-    public MUSEmail(String sender, String recpt, String subject, String smtphost, String[] data) {
-        // Open connection to SMTP server
-        // smtp port is 25
+  public MUSEmail(String sender, String recpt, String subject, String smtphost, String[] data) {
+    // Open connection to SMTP server
+    // smtp port is 25
 
-        m_sender = sender;
-        m_recpt = recpt;
-        m_subject = subject;
-        m_smtphost = smtphost;
-        m_data = data;
+    m_sender = sender;
+    m_recpt = recpt;
+    m_subject = subject;
+    m_smtphost = smtphost;
+    m_data = data;
 
-        start();
+    start();
 
-    }
+  }
 
-    public void run() {
+  public void run() {
 
-        try {
-            try {
-                socket = new Socket(m_smtphost, 25);
+    try {
+      try {
+        socket = new Socket(m_smtphost, 25);
 
-                rina = socket.getInetAddress();
-                lina = rina.getLocalHost();
-                ps = new PrintStream(socket.getOutputStream());
-                // dis = new DataInputStream(socket.getInputStream());
-                dis = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        rina = socket.getInetAddress();
+        lina = InetAddress.getLocalHost();
+        ps = new PrintStream(socket.getOutputStream());
+        // dis = new DataInputStream(socket.getInputStream());
+        dis = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                // Send message
-                sendline("HELO " + lina.toString());
-                sendline("MAIL FROM:" + m_sender);
-                sendline("RCPT TO:" + m_recpt);
-                sendline("DATA");
-                sendnowait("To:      " + m_recpt);
-                sendnowait("From:    " + m_sender);
-                sendnowait("Subject: " + m_subject);
-                sendnowait("");
-                for (String aM_data : m_data) {
-                    sendnowait(aM_data);
-                }
-                // Send a line with a . to close the connection
-                sendline(".");
-            }
-
-            catch (Exception ex) {
-                socket.close();
-            }
-
-            // Log action
-            MUSLog.Log("Email message sent to " + m_recpt, MUSLog.kDeb);
-            socket.close();
-
-        } catch (Exception ex) {
-            // Fatal exception
+        // Send message
+        sendline("HELO " + lina.toString());
+        sendline("MAIL FROM:" + m_sender);
+        sendline("RCPT TO:" + m_recpt);
+        sendline("DATA");
+        sendnowait("To:      " + m_recpt);
+        sendnowait("From:    " + m_sender);
+        sendnowait("Subject: " + m_subject);
+        sendnowait("");
+        for (String aM_data : m_data) {
+          sendnowait(aM_data);
         }
+        // Send a line with a . to close the connection
+        sendline(".");
+      } catch (Exception ex) {
+        socket.close();
+      }
 
+      // Log action
+      MUSLog.Log("Email message sent to " + m_recpt, MUSLog.kDeb);
+      socket.close();
+
+    } catch (Exception ex) {
+      // Fatal exception
     }
 
-    void sendline(String data) throws IOException {
-        ps.println(data);
-        ps.flush();
-        String s = dis.readLine();
-    }
+  }
 
-    void sendnowait(String data) throws IOException {
-        ps.println(data);
-        ps.flush();
-    }
+  void sendline(String data) throws IOException {
+    ps.println(data);
+    ps.flush();
+    String s = dis.readLine();
+  }
+
+  void sendnowait(String data) {
+    ps.println(data);
+    ps.flush();
+  }
 
 }

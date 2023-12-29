@@ -29,12 +29,13 @@
 
 package net.sf.opensmus;
 
-import java.util.*;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.util.Vector;
 
 /**
  * Class representing the content portion of a message formatted according to the Shockwave MultiUserServer specs.
- * <BR>See technote 15465 "Shockwave Multiuser protocol description" at http://go.adobe.com/kb/ts_tn_15465_en-us
+ * <BR>See technote 15465 "Shockwave Multiuser protocol description" at <a href="http://go.adobe.com/kb/ts_tn_15465_en-us">...</a>
  * for more information about the internal structure of a Shockwave binary message.
  * Shockwave is a trademark of Adobe, Inc. All rights reserved.
  */
@@ -44,167 +45,104 @@ import java.io.*;
 
 public class MUSMsgContent {
 
-    /**
-     * Public vector element storing the LValue members.
-     */
-    public Vector<LValue> m_list;
+  /**
+   * Public vector element storing the LValue members.
+   */
+  public final Vector<LValue> m_list = new Vector<>();
 
-    /**
-     * Default Constructor
-     */
-    public MUSMsgContent() {
-        m_list = new Vector<LValue>();
-    }
+  /**
+   * Adds a LValue element to the message contents
+   *
+   * @param elem LValue to add
+   */
+  public void addElement(LValue elem) {
+    m_list.addElement(elem);
+  }
 
-    /**
-     * Adds a LValue element to the message contents
-     *
-     * @param elem LValue to add
-     * @return boolean
-     */
-    public boolean addElement(LValue elem) {
-        m_list.addElement(elem);
+  /**
+   * Fetches an LValue element from message contents list.
+   * Usually messages contain only one element, a LList, which in turn contains other values.
+   *
+   * @param pos index of the element to be retrieved
+   * @return LValue
+   */
+  public LValue getElementAt(int pos) {
+    return m_list.elementAt(pos);
+  }
 
-        return true;
-    }
+  /**
+   * Returns the number of elements in the message contents list
+   */
+  public int count() {
+    return m_list.size();
+  }
 
-    /**
-     * Fetches an LValue element from message contents list.
-     * Usually messages contain only one element, a LList, which in turn contains other values.
-     *
-     * @param pos index of the element to be retrieved
-     * @return LValue
-     */
-    public LValue getElementAt(int pos) {
-        return m_list.elementAt(pos);
-    }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public int extractFromBytes(byte[] rawBytes) {
+    int chunkSize = 0;
+    // int elemSize = 0;
+    short elemType;
+    LValue newVal;
+    while (chunkSize < rawBytes.length) {
+      elemType = ConversionUtils.byteArrayToShort(rawBytes, chunkSize);
+      chunkSize = chunkSize + 2;
 
-    /**
-     * Returns the number of elements in the message contents list
-     */
-    public int count() {
-        return m_list.size();
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public int extractFromBytes(byte[] rawBytes) {
-        int chunkSize = 0;
-        // int elemSize = 0;
-        short elemType;
-        LValue newVal;
-        while (chunkSize < rawBytes.length) {
-            elemType = ConversionUtils.byteArrayToShort(rawBytes, chunkSize);
-            chunkSize = chunkSize + 2;
-
-            switch (elemType) {
-                case LValue.vt_Void:
-                    newVal = new LVoid();
-                    break;
-
-                case LValue.vt_Integer:
-                    newVal = new LInteger();
-                    break;
-
-                case LValue.vt_Symbol:
-                    newVal = new LSymbol();
-                    break;
-
-                case LValue.vt_String:
-                    newVal = new LString();
-                    break;
-
-                case LValue.vt_Picture:
-                    newVal = new LPicture();
-                    break;
-
-                case LValue.vt_Float:
-                    newVal = new LFloat();
-                    break;
-
-                case LValue.vt_List:
-                    newVal = new LList();
-                    break;
-
-                case LValue.vt_Point:
-                    newVal = new LPoint();
-                    break;
-
-                case LValue.vt_Rect:
-                    newVal = new LRect();
-                    break;
-
-                case LValue.vt_PropList:
-                    newVal = new LPropList();
-                    break;
-
-                case LValue.vt_Color:
-                    newVal = new LColor();
-                    break;
-
-                case LValue.vt_Date:
-                    newVal = new LDate();
-                    break;
-
-                case LValue.vt_Media:
-                    newVal = new LMedia();
-                    break;
-
-                case LValue.vt_3dVector:
-                    newVal = new L3dVector();
-                    break;
-
-                case LValue.vt_3dTransform:
-                    newVal = new L3dTransform();
-                    break;
-
-                default:
-                    newVal = new LVoid();
-                    break;
-
-
-            }
-            chunkSize = chunkSize + newVal.extractFromBytes(rawBytes, chunkSize);
-            m_list.addElement(newVal);
-
-        }
-        return chunkSize;
+      newVal = switch (elemType) {
+        case LValue.vt_Integer -> new LInteger();
+        case LValue.vt_Symbol -> new LSymbol();
+        case LValue.vt_String -> new LString();
+        case LValue.vt_Picture -> new LPicture();
+        case LValue.vt_Float -> new LFloat();
+        case LValue.vt_List -> new LList();
+        case LValue.vt_Point -> new LPoint();
+        case LValue.vt_Rect -> new LRect();
+        case LValue.vt_PropList -> new LPropList();
+        case LValue.vt_Color -> new LColor();
+        case LValue.vt_Date -> new LDate();
+        case LValue.vt_Media -> new LMedia();
+        case LValue.vt_3dVector -> new L3dVector();
+        case LValue.vt_3dTransform -> new L3dTransform();
+        default -> new LVoid();
+      };
+      chunkSize = chunkSize + newVal.extractFromBytes(rawBytes, chunkSize);
+      m_list.addElement(newVal);
 
     }
+    return chunkSize;
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public void dump() {
+  }
 
-        for (LValue temp : m_list) {
-            MUSLog.Log("content element: ", MUSLog.kDeb);
-            temp.dump();
-        }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public void dump() {
+
+    for (LValue temp : m_list) {
+      MUSLog.Log("content element: ", MUSLog.kDeb);
+      temp.dump();
     }
+  }
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public byte[] getBytes() {
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public byte[] getBytes() {
 
-        try {
-            ByteArrayOutputStream bstream = new ByteArrayOutputStream(8192);
-            DataOutputStream datastream = new DataOutputStream(bstream);
+    try {
+      ByteArrayOutputStream bstream = new ByteArrayOutputStream(8192);
+      DataOutputStream datastream = new DataOutputStream(bstream);
 
-            for (LValue elem : m_list) {
-                byte[] elemBytes = elem.getBytes();
-                datastream.write(elemBytes, 0, elemBytes.length);
-            }
+      for (LValue elem : m_list) {
+        byte[] elemBytes = elem.getBytes();
+        datastream.write(elemBytes, 0, elemBytes.length);
+      }
 
-            return bstream.toByteArray();
-        } catch (IOException e) {
-            MUSLog.Log("Error in msgcontent stream", MUSLog.kDeb);
-            return "0".getBytes();
-        } catch (Exception e) {
-            MUSLog.Log("Error in msgcontent stream", MUSLog.kDeb);
-            return "0".getBytes();
-        }
+      return bstream.toByteArray();
+    } catch (Exception e) {
+      MUSLog.Log("Error in msgcontent stream", MUSLog.kDeb);
+      return "0".getBytes();
     }
+  }
 }

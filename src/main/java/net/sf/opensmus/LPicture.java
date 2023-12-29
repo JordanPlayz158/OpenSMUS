@@ -35,27 +35,27 @@ package net.sf.opensmus;
  */
 public class LPicture extends LMedia {
 
-    /**
-     * Constructor
-     */
-    public LPicture(byte[] initImage) {
-        super(initImage);
-        setType(LValue.vt_Picture);
-    }
+  /**
+   * Constructor
+   */
+  public LPicture(byte[] initImage) {
+    super(initImage);
+    setType(LValue.vt_Picture);
+  }
 
-    /**
-     * Constructor
-     */
-    public LPicture() {
-        super();
-        setType(LValue.vt_Picture);
-    }
+  /**
+   * Constructor
+   */
+  public LPicture() {
+    super();
+    setType(LValue.vt_Picture);
+  }
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public void dump() {
-        MUSLog.Log("Picture> " + ConversionUtils.bytesToBinHex(toBytes()), MUSLog.kDeb);
-    }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public void dump() {
+    MUSLog.Log("Picture> " + ConversionUtils.bytesToBinHex(toBytes()), MUSLog.kDeb);
+  }
 }

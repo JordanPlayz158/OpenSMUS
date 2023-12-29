@@ -29,19 +29,21 @@
 
 package net.sf.opensmus;
 
-/** 
- *Base class representing a queued message to the dispatcher.
+/**
+ * Base class representing a queued message to the dispatcher.
  */
 public class MUSQueuedMessage {
 
-  public ServerUser m_user;
-  public MUSMessage m_msg;
+  public final ServerUser m_user;
+  public final MUSMessage m_msg;
 
 
-  /** Constructor */
-  public MUSQueuedMessage(ServerUser user, MUSMessage msg){ 
-  	m_user = user;
-  	m_msg = msg;
+  /**
+   * Constructor
+   */
+  public MUSQueuedMessage(ServerUser user, MUSMessage msg) {
+    m_user = user;
+    m_msg = msg;
   }
 
 }

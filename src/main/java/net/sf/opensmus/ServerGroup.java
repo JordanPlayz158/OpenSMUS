@@ -37,96 +37,96 @@ import java.util.Vector;
  */
 public interface ServerGroup {
 
-    /**
-     * Retrieves a pointer to a ServerUser object representing a user connected to the movie.
-     *
-     * @param username String with the name of the user to be returned
-     * @return ServerUser pointer, or throws a UserNotFoundException
-     */
-    public ServerUser getServerUser(String username) throws UserNotFoundException;
+  /**
+   * Retrieves a pointer to a ServerUser object representing a user connected to the movie.
+   *
+   * @param username String with the name of the user to be returned
+   * @return ServerUser pointer, or throws a UserNotFoundException
+   */
+  ServerUser getServerUser(String username) throws UserNotFoundException;
 
-    /**
-     * Retrieves a pointer to a ServerUser object representing a user connected to the movie.
-     *
-     * @param useridx index of the user to be returned
-     * @return ServerUser pointer, or throws a UserNotFoundException
-     */
-    public ServerUser getServerUser(int useridx) throws UserNotFoundException;
+  /**
+   * Retrieves a pointer to a ServerUser object representing a user connected to the movie.
+   *
+   * @param useridx index of the user to be returned
+   * @return ServerUser pointer, or throws a UserNotFoundException
+   */
+  ServerUser getServerUser(int useridx) throws UserNotFoundException;
 
-    /**
-     * Adds a user to this server group
-     *
-     * @param oneuser ServerUser object to be added
-     */
-    public void addUser(ServerUser oneuser) throws MUSErrorCode;
+  /**
+   * Adds a user to this server group
+   *
+   * @param oneuser ServerUser object to be added
+   */
+  void addUser(ServerUser oneuser) throws MUSErrorCode;
 
-    /**
-     * Removes a user from this server group.
-     *
-     * @param oneuser ServerUser object to be removed
-     */
-    public void removeUser(ServerUser oneuser);
+  /**
+   * Removes a user from this server group.
+   *
+   * @param oneuser ServerUser object to be removed
+   */
+  void removeUser(ServerUser oneuser);
 
-    /**
-     * Gets the number of users in this group.
-     *
-     * @return the number of users
-     */
-    public int serverUserCount();
+  /**
+   * Gets the number of users in this group.
+   *
+   * @return the number of users
+   */
+  int serverUserCount();
 
-    /**
-     * Sends a message to all users that are members of this group
-     *
-     * @param msg Message to send
-     */
-    public void sendMessage(MUSMessage msg);
+  /**
+   * Sends a message to all users that are members of this group
+   *
+   * @param msg Message to send
+   */
+  void sendMessage(MUSMessage msg);
 
-    /**
-     * Returns the name of the group as a String
-     */
-    public String name();
+  /**
+   * Returns the name of the group as a String
+   */
+  String name();
 
-    /**
-     * Returns the maximum number of users allowed to join this group.
-     * <BR> By default there is no limit on the number of users, unless the
-     * GroupSizeLimits directive in specified in a movie configuration file.
-     *
-     * @return the number of users allowed to join the group, or -1 for unlimited users
-     */
-    public int userLimit();
+  /**
+   * Returns the maximum number of users allowed to join this group.
+   * <BR> By default there is no limit on the number of users, unless the
+   * GroupSizeLimits directive in specified in a movie configuration file.
+   *
+   * @return the number of users allowed to join the group, or -1 for unlimited users
+   */
+  int userLimit();
 
-    /**
-     * Sets the maximum number of users allowed to join this group.
-     * <BR> By default there is no limit on the number of users, unless the
-     * GroupSizeLimits directive in specified in a movie configuration file.
-     *
-     * @param level the number of users allowed to join the group, or -1 for unlimited users
-     */
-    public void setuserLimit(int level);
+  /**
+   * Sets the maximum number of users allowed to join this group.
+   * <BR> By default there is no limit on the number of users, unless the
+   * GroupSizeLimits directive in specified in a movie configuration file.
+   *
+   * @param level the number of users allowed to join the group, or -1 for unlimited users
+   */
+  void setuserLimit(int level);
 
-    /**
-     * Checks if the group is set to persist on the movie even when no users members of it.
-     * Groups are not persistent by default.
-     *
-     * @return TRUE if the group is set to persist, FALSE otherwise
-     */
-    public boolean persists();
+  /**
+   * Checks if the group is set to persist on the movie even when no users members of it.
+   * Groups are not persistent by default.
+   *
+   * @return TRUE if the group is set to persist, FALSE otherwise
+   */
+  boolean persists();
 
-    /**
-     * Toggles the group persistent flag for this group.
-     * Persistent groups are not destroyed even when no users are connected to it.
-     *
-     * @param persistflag TRUE if the group needs to persist on the movie, FALSE otherwise
-     */
-    public void setpersists(boolean persistflag);
+  /**
+   * Toggles the group persistent flag for this group.
+   * Persistent groups are not destroyed even when no users are connected to it.
+   *
+   * @param persistflag TRUE if the group needs to persist on the movie, FALSE otherwise
+   */
+  void setpersists(boolean persistflag);
 
-    /**
-     * Returns a list of the names of the users in the group.
-     */
-    public Vector<String> getUserNames();
+  /**
+   * Returns a list of the names of the users in the group.
+   */
+  Vector<String> getUserNames();
 
-    /**
-     * Returns a list of all the users in the group.
-     */
-    public Vector<ServerUser> getServerUsers();
-} 
+  /**
+   * Returns a list of all the users in the group.
+   */
+  Vector<ServerUser> getServerUsers();
+}

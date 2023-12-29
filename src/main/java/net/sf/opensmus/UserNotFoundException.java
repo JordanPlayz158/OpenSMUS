@@ -30,7 +30,7 @@
 package net.sf.opensmus;
 
 public class UserNotFoundException extends Exception implements java.io.Serializable {
-	public UserNotFoundException(String msg) {
-		super(msg);
-	}
+  public UserNotFoundException(String msg) {
+    super(msg);
+  }
 }

@@ -31,26 +31,26 @@ package net.sf.opensmus;
 
 /////////////////////////////////////////////////////////////
 
-/** 
- *The main OpenSMUS class 
+/**
+ * The main OpenSMUS class
  */
-public class OpenSMUS{  
+public class OpenSMUS {
 
 
   public OpenSMUS() {
   }
 
-/** 
- *Entry point for the application
- */
+  /**
+   * Entry point for the application
+   */
   public static void main(String[] args) {
     restart();
-}
+  }
 
-    /**
-        *Reserved for internal use of OpenSMUS
-        */
-  public static void restart() {     
-      MUSServer server = new MUSServer();
-  } 
+  /**
+   * Reserved for internal use of OpenSMUS
+   */
+  public static void restart() {
+    MUSServer server = new MUSServer();
+  }
 } 

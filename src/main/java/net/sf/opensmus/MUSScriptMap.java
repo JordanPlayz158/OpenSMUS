@@ -29,8 +29,11 @@
 
 package net.sf.opensmus;
 
-import java.util.*;
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Properties;
+import java.util.StringTokenizer;
 
 /**
  * This class maps movie names to server side script classes configured in the ScriptMap.cfg file.
@@ -38,85 +41,85 @@ import java.io.*;
  */
 public class MUSScriptMap {
 
-    /**
-     * Properties set to store the script map table
-     */
-    public Properties m_props;
+  /**
+   * Properties set to store the script map table
+   */
+  public final Properties m_props;
 
-    /**
-     * Constructor
-     */
-    public MUSScriptMap(boolean enablescripting) {
+  /**
+   * Constructor
+   */
+  public MUSScriptMap(boolean enablescripting) {
 
-        m_props = new Properties();
-        if (enablescripting) {
-            MUSLog.Log("Server side scripting enabled", MUSLog.kSys);
-            try {
-                FileInputStream in = new FileInputStream("Scriptmap.cfg");
-                m_props.load(in);
-                in.close();
-            } catch (FileNotFoundException e) {
-                MUSLog.Log("Scriptmap config file not found", MUSLog.kDeb);
-            } catch (IOException e) {
-                MUSLog.Log("Error reading scriptmap file!", MUSLog.kDeb);
-            }
-        } else {
-            MUSLog.Log("Server side scripting disabled", MUSLog.kSys);
-        }
+    m_props = new Properties();
+    if (enablescripting) {
+      MUSLog.Log("Server side scripting enabled", MUSLog.kSys);
+      try {
+        FileInputStream in = new FileInputStream("Scriptmap.cfg");
+        m_props.load(in);
+        in.close();
+      } catch (FileNotFoundException e) {
+        MUSLog.Log("Scriptmap config file not found", MUSLog.kDeb);
+      } catch (IOException e) {
+        MUSLog.Log("Error reading scriptmap file!", MUSLog.kDeb);
+      }
+    } else {
+      MUSLog.Log("Server side scripting disabled", MUSLog.kSys);
+    }
+  }
+
+  /**
+   * Returns the name(s) of the server side script class configured for a particular movie.
+   * If no entry matches the movie name in the script map the default ServerSideScript class is returned.
+   * <BR>Reserved for internal use of OpenSMUS.
+   */
+  public String[] getScriptName(String prop) {
+
+    prop = prop.toUpperCase();
+
+    String defaultprop = m_props.getProperty("DEFAULT");
+    if (defaultprop == null)
+      defaultprop = "net.sf.opensmus.ServerSideScript";
+
+    String[] scriptList;
+    try {
+      scriptList = getPropertyEntries(prop, ";"); // Same thing as getStringListProperty in MUSMovieProperties
+    } catch (PropertyNotFoundException e) {
+      scriptList = new String[]{defaultprop};
     }
 
-    /**
-     * Returns the name(s) of the server side script class configured for a particular movie.
-     * If no entry matches the movie name in the script map the default ServerSideScript class is returned.
-     * <BR>Reserved for internal use of OpenSMUS.
-     */
-    public String[] getScriptName(String prop) {
+    return (scriptList); // return m_props.getProperty(prop, defaultprop);
+  }
 
-        prop = prop.toUpperCase();
 
-        String defaultprop = m_props.getProperty("DEFAULT");
-        if (defaultprop == null)
-            defaultprop = "net.sf.opensmus.ServerSideScript";
+  /**
+   * Returns an array of Strings associated with the property specified by
+   * propertyName. The method is used for entries that potentially have
+   * multiple values separated by a particular character or string.
+   * <p/>
+   * Typically this will be used for space separated words:
+   * String[] entries =
+   * AppProperties.getInstance().getPropertyEntries("PropertyName", " ");
+   *
+   * @param propertyName    the name of the property
+   * @param separatorString the string that separates each entry
+   */
+  public String[] getPropertyEntries(String propertyName, String separatorString) throws PropertyNotFoundException {
+    String prop = m_props.getProperty(propertyName);
 
-        String[] scriptList;
-        try {
-            scriptList = getPropertyEntries(prop, ";"); // Same thing as getStringListProperty in MUSMovieProperties
-        } catch (PropertyNotFoundException e) {
-            scriptList = new String[]{defaultprop};
-        }
-
-        return (scriptList); // return m_props.getProperty(prop, defaultprop);
+    if (prop == null) {
+      throw new PropertyNotFoundException(propertyName);
     }
 
+    StringTokenizer tokeniser = new StringTokenizer(prop, separatorString);
+    String[] result = new String[tokeniser.countTokens()];
+    int i = 0;
 
-    /**
-     * Returns an array of Strings associated with the property specified by
-     * propertyName. The method is used for entries that potentially have
-     * multiple values separated by a particular character or string.
-     * <p/>
-     * Typically this will be used for space separated words:
-     * String[] entries =
-     * AppProperties.getInstance().getPropertyEntries("PropertyName", " ");
-     *
-     * @param propertyName    the name of the property
-     * @param separatorString the string that separates each entry
-     */
-    public String[] getPropertyEntries(String propertyName, String separatorString) throws PropertyNotFoundException {
-        String prop = m_props.getProperty(propertyName);
-
-        if (prop == null) {
-            throw new PropertyNotFoundException(propertyName);
-        }
-
-        StringTokenizer tokeniser = new StringTokenizer(prop, separatorString);
-        String[] result = new String[tokeniser.countTokens()];
-        int i = 0;
-
-        while (tokeniser.hasMoreElements()) {
-            result[i++] = tokeniser.nextToken();
-        }
-
-        return result;
+    while (tokeniser.hasMoreElements()) {
+      result[i++] = tokeniser.nextToken();
     }
+
+    return result;
+  }
 }
 

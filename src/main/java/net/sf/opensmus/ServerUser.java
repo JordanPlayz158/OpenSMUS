@@ -29,104 +29,103 @@
 
 package net.sf.opensmus;
 
-/**
- *Interface representing a user connected to the server.
- *<BR> Scripts can use methods of the ServerGroup interface to retrieve pointers to existing users.
- */
+import java.util.Vector;
 
-import java.util.*;
+/**
+ * Interface representing a user connected to the server.
+ * <BR> Scripts can use methods of the ServerGroup interface to retrieve pointers to existing users.
+ */
 
 public interface ServerUser {
 
-    /**
-     * Sends a message to this server user directly.
-     *
-     * @param msg Message to send
-     */
-    public void sendMessage(MUSMessage msg);
+  /**
+   * Sends a message to this server user directly.
+   *
+   * @param msg Message to send
+   */
+  void sendMessage(MUSMessage msg);
 
-    /**
-     * Posts a message to the OpenSMUS server dispatcher.
-     * <BR> Scripts can use this method to post messages to the server as if they were a connected user, since the ServerSideScript class implements the ServerUser interface.
-     *
-     * @param msg Message to post
-     */
-    public void postMessage(MUSMessage msg);
+  /**
+   * Posts a message to the OpenSMUS server dispatcher.
+   * <BR> Scripts can use this method to post messages to the server as if they were a connected user, since the ServerSideScript class implements the ServerUser interface.
+   *
+   * @param msg Message to post
+   */
+  void postMessage(MUSMessage msg);
 
-    /**
-     * Returns the name of the user as a String
-     */
-    public String name();
+  /**
+   * Returns the name of the user as a String
+   */
+  String name();
 
-    /**
-     * Gets the user access level for this user
-     */
-    public int userLevel();
+  /**
+   * Gets the user access level for this user
+   */
+  int userLevel();
 
-    /**
-     * Sets the user access level for this user.
-     *
-     * @param level new user access level
-     */
-    public void setuserLevel(int level);
+  /**
+   * Sets the user access level for this user.
+   *
+   * @param level new user access level
+   */
+  void setuserLevel(int level);
 
-    /**
-     * Retrieves the ServerMovie object representing the movie this user is connected to.
-     * <BR> Server side scripts can use this method to retrieve a pointer to the movie that created them.
-     */
-    public ServerMovie serverMovie();
+  /**
+   * Retrieves the ServerMovie object representing the movie this user is connected to.
+   * <BR> Server side scripts can use this method to retrieve a pointer to the movie that created them.
+   */
+  ServerMovie serverMovie();
 
-    /**
-     * Gets this user's creationTime on the server, equivalent to the user login
-     */
-    public long creationTime();
+  /**
+   * Gets this user's creationTime on the server, equivalent to the user login
+   */
+  long creationTime();
 
-    /**
-     * Gets this user's IP address as a String
-     */
-    public String ipAddress();
+  /**
+   * Gets this user's IP address as a String
+   */
+  String ipAddress();
 
-    /**
-     * Gets a list of the groups this user is a member of.
-     * By default all users are at least members of one group, @AllUsers
-     *
-     * @return Java Vector with the group names as Strings.
-     */
-    public Vector<String> getGroupNames();
+  /**
+   * Gets a list of the groups this user is a member of.
+   * By default all users are at least members of one group, @AllUsers
+   *
+   * @return Java Vector with the group names as Strings.
+   */
+  Vector<String> getGroupNames();
 
-     /**
-     * Gets a list of the groups this user is a member of.
-     * By default all users are at least members of one group, @AllUsers
-     *
-     * @return Java Vector with the group objects.
-     */
-    public Vector<ServerGroup> getGroups();
+  /**
+   * Gets a list of the groups this user is a member of.
+   * By default all users are at least members of one group, @AllUsers
+   *
+   * @return Java Vector with the group objects.
+   */
+  Vector<ServerGroup> getGroups();
 
-    /**
-     * Gets the number of groups this user is a member of.
-     * By default all users are at least members of one group, @AllUsers
-     *
-     * @return the number of groups
-     */
-    public int getGroupsCount();
+  /**
+   * Gets the number of groups this user is a member of.
+   * By default all users are at least members of one group, @AllUsers
+   *
+   * @return the number of groups
+   */
+  int getGroupsCount();
 
-    /**
-     * Deletes this user, disconnecting him from the server.
-     */
-    public void deleteUser();
+  /**
+   * Deletes this user, disconnecting him from the server.
+   */
+  void deleteUser();
 
-    /**
-     * Called by the OpenSMUS server when the user joins a group.
-     *
-     * @param grp ServerGroup reference
-     */
-    public void groupJoined(ServerGroup grp);
+  /**
+   * Called by the OpenSMUS server when the user joins a group.
+   *
+   * @param grp ServerGroup reference
+   */
+  void groupJoined(ServerGroup grp);
 
-    /**
-     * Called by the OpenSMUS server when the user leaves a group.
-     *
-     * @param grp ServerGroup reference
-     */
-    public void groupLeft(ServerGroup grp);
-
-} 
+  /**
+   * Called by the OpenSMUS server when the user leaves a group.
+   *
+   * @param grp ServerGroup reference
+   */
+  void groupLeft(ServerGroup grp);
+}

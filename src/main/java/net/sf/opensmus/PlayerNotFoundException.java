@@ -30,7 +30,7 @@
 package net.sf.opensmus;
 
 public class PlayerNotFoundException extends Exception implements java.io.Serializable {
-	public PlayerNotFoundException(String msg) {
-		super(msg);
-	}
+  public PlayerNotFoundException(String msg) {
+    super(msg);
+  }
 }

@@ -29,62 +29,65 @@
 
 package net.sf.opensmus;
 
-import java.util.*;
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Properties;
+import java.util.StringTokenizer;
 
 public class MUSMovieProperties extends MUSServerProperties {
 
-    public Properties movieProps;
+  public final Properties movieProps;
 
-    public MUSMovieProperties(String moviename, Properties serverdef) {
-        movieProps = (Properties) serverdef.clone();
-        movieProps.put("NotifyDisconnect", "default");
-        movieProps.put("GroupSizeLimits", "default");
+  public MUSMovieProperties(String moviename, Properties serverdef) {
+    movieProps = (Properties) serverdef.clone();
+    movieProps.put("NotifyDisconnect", "default");
+    movieProps.put("GroupSizeLimits", "default");
 
-        try {
-            FileInputStream in = new FileInputStream(moviename.toUpperCase() + ".cfg");
-            MUSLog.Log("Reading movie configuration file " + moviename.toUpperCase() + ".cfg", MUSLog.kSys);
-            movieProps.load(in);
-            in.close();
-        } catch (FileNotFoundException e) {
+    try {
+      FileInputStream in = new FileInputStream(moviename.toUpperCase() + ".cfg");
+      MUSLog.Log("Reading movie configuration file " + moviename.toUpperCase() + ".cfg", MUSLog.kSys);
+      movieProps.load(in);
+      in.close();
+    } catch (FileNotFoundException ignored) {
 
-        } catch (IOException e) {
-            MUSLog.Log("Error reading movie configuration file!", MUSLog.kSys);
-        }
+    } catch (IOException e) {
+      MUSLog.Log("Error reading movie configuration file!", MUSLog.kSys);
     }
+  }
 
-    // Needed to access movie specific settings
-    @Override
-    public String getProperty(String prop) {
-        return movieProps.getProperty(prop);
+  public static String parseGroupSizeName(String fullgroupsizeinfo) {
+    return fullgroupsizeinfo.substring(0, fullgroupsizeinfo.indexOf(":"));
+  }
+
+  public static Integer parseGroupSizeLimit(String fullgroupsizeinfo) {
+    try {
+      String limitstr = fullgroupsizeinfo.substring(fullgroupsizeinfo.indexOf(":") + 1);
+      return Integer.parseInt(limitstr);
+    } catch (NumberFormatException e) {
+      MUSLog.Log("Bad GroupSizeLimit specified", MUSLog.kSys);
+      return 0;
     }
+  }
 
-    // Needed to access movie specific settings
-    @Override
-    public String[] getStringListProperty(String prop) {
+  // Needed to access movie specific settings
+  @Override
+  public String getProperty(String prop) {
+    return movieProps.getProperty(prop);
+  }
 
-        StringTokenizer st = new StringTokenizer(movieProps.getProperty(prop), ";");
-        String[] result = new String[st.countTokens()];
-        int i = 0;
-        while (st.hasMoreTokens()) {
-            result[i] = st.nextToken();
-            i++;
-        }
-        return result;
+  // Needed to access movie specific settings
+  @Override
+  public String[] getStringListProperty(String prop) {
+
+    StringTokenizer st = new StringTokenizer(movieProps.getProperty(prop), ";");
+    String[] result = new String[st.countTokens()];
+    int i = 0;
+    while (st.hasMoreTokens()) {
+      result[i] = st.nextToken();
+      i++;
     }
-
-    public static String parseGroupSizeName(String fullgroupsizeinfo) {
-        return fullgroupsizeinfo.substring(0, fullgroupsizeinfo.indexOf(":"));
-    }
-
-    public static Integer parseGroupSizeLimit(String fullgroupsizeinfo) {
-        try {
-            String limitstr = fullgroupsizeinfo.substring(fullgroupsizeinfo.indexOf(":") + 1, fullgroupsizeinfo.length());
-            return Integer.parseInt(limitstr);
-        } catch (NumberFormatException e) {
-            MUSLog.Log("Bad GroupSizeLimit specified", MUSLog.kSys);
-            return 0;
-        }
-    }
+    return result;
+  }
 
 }

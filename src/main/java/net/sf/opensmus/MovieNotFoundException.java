@@ -30,7 +30,7 @@
 package net.sf.opensmus;
 
 public class MovieNotFoundException extends Exception implements java.io.Serializable {
-	public MovieNotFoundException(String msg) {
-		super(msg);
-	}
+  public MovieNotFoundException(String msg) {
+    super(msg);
+  }
 }

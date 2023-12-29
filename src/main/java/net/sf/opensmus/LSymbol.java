@@ -35,33 +35,33 @@ package net.sf.opensmus;
  */
 public class LSymbol extends LString {
 
-    /**
-     * Constructor. Calls superclass (LString) methods
-     */
-    public LSymbol(String initString) {
-        super(initString);
-        setType(LValue.vt_Symbol);
-    }
+  /**
+   * Constructor. Calls superclass (LString) methods
+   */
+  public LSymbol(String initString) {
+    super(initString);
+    setType(LValue.vt_Symbol);
+  }
 
-    /**
-     * Constructor. Calls superclass (LString) methods
-     */
-    public LSymbol() {
-        super();
-        setType(LValue.vt_Symbol);
-    }
+  /**
+   * Constructor. Calls superclass (LString) methods
+   */
+  public LSymbol() {
+    super();
+    setType(LValue.vt_Symbol);
+  }
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public void dump() {
-        MUSLog.Log("Symbol> " + toString(), MUSLog.kDeb);
-    }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public void dump() {
+    MUSLog.Log("Symbol> " + this, MUSLog.kDeb);
+  }
 
-     @Override
-    public String toString() {
-         return "#"+super.toString();
-     }
+  @Override
+  public String toString() {
+    return "#" + super.toString();
+  }
 
 }

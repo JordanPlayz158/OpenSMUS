@@ -31,9 +31,9 @@ package net.sf.opensmus;
 
 import io.netty.buffer.ByteBuf;
 
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 
 /**
  * Class representing a message formatted according to the Shockwave MultiUserServer specs.
@@ -43,210 +43,210 @@ import java.net.*;
  */
 public class MUSMessage {
 
-    /**
-     * Default MUS message header, included automatically with each message.
-     */
-    public final static byte[] m_header = {0x72, 0x00};
+  /**
+   * Default MUS message header, included automatically with each message.
+   */
+  public final static byte[] m_header = {0x72, 0x00};
 
-    /**
-     * Message error code, represented as a MUSErrorCode type (for example MUSErrorCode.NoError)
-     */
-    public int m_errCode = 0;
+  /**
+   * Message error code, represented as a MUSErrorCode type (for example MUSErrorCode.NoError)
+   */
+  public int m_errCode = 0;
 
-    /**
-     * Message timestamp. Usually set automatically by OpenSMUS's message dispatcher.
-     */
-    public int m_timeStamp = 0;
+  /**
+   * Message timestamp. Usually set automatically by OpenSMUS's message dispatcher.
+   */
+  public int m_timeStamp = 0;
 
-    /**
-     * A single MUSMsgHeaderString object corresponding to the message's subject.
-     */
-    public MUSMsgHeaderString m_subject;
+  /**
+   * A single MUSMsgHeaderString object corresponding to the message's subject.
+   */
+  public MUSMsgHeaderString m_subject;
 
-    /**
-     * A single MUSMsgHeaderString object corresponding to the name of the message's sender.
-     */
-    public MUSMsgHeaderString m_senderID;
+  /**
+   * A single MUSMsgHeaderString object corresponding to the name of the message's sender.
+   */
+  public MUSMsgHeaderString m_senderID;
 
-    /**
-     * A MUSMsgHeaderStringList object containing one or more MUSMsgHeaderStrings, each corresponding to
-     * one intended recipient for this message.
-     */
-    public MUSMsgHeaderStringList m_recptID;
+  /**
+   * A MUSMsgHeaderStringList object containing one or more MUSMsgHeaderStrings, each corresponding to
+   * one intended recipient for this message.
+   */
+  public MUSMsgHeaderStringList m_recptID;
 
-    /**
-     * The content part of this message. Content is always one single LValue, but it may be a linear or property list including other LValues.
-     */
-    public LValue m_msgContent;
+  /**
+   * The content part of this message. Content is always one single LValue, but it may be a linear or property list including other LValues.
+   */
+  public LValue m_msgContent;
 
-    /**
-     * UDP flag for this message. When set to TRUE the dispatcher will attempt to deliver the message
-     * using the UDP connection channel.
-     */
-    public boolean m_udp = false;
-
-
-    /**
-     * Default Constructor
-     */
-    public MUSMessage() {
-    }
-
-     /**
-     * Constructor. Created a message from raw bytes.
-     */
-     public MUSMessage(ByteBuf buf) {
-         this.extractMUSMessage(buf);
-     }
-
-    /**
-     * Constructor. Clones another message.
-     */
-    public MUSMessage(MUSMessage msg) {
-        // byte[] raw = msg.getBytes().toByteBuffer().array();
-        ByteBuf raw = msg.getBytes();
-        raw.readerIndex(6); // Forward past the header bytes
-        extractMUSMessage(raw);
-        // TODO: Replace the m_senderID here if we want to skip reading the bytes
-    }
+  /**
+   * UDP flag for this message. When set to TRUE the dispatcher will attempt to deliver the message
+   * using the UDP connection channel.
+   */
+  public boolean m_udp = false;
 
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    // (Only called directly for new message objects from the logoon handlers)
-    // Other usages use the constructor instead.
-    public void extractMUSMessage(ByteBuf buf) {
+  /**
+   * Default Constructor
+   */
+  public MUSMessage() {
+  }
 
-        byte[] m_rawContents = readRawBytes(buf);
+  /**
+   * Constructor. Created a message from raw bytes.
+   */
+  public MUSMessage(ByteBuf buf) {
+    this.extractMUSMessage(buf);
+  }
 
-        // Debug helpers
-        // System.out.println("Encrypted: " + m_encrypted);
-        // System.out.println("Length: " + m_rawContents.length);
-        // System.out.println("String format: " + new String(m_rawContents));
-        // System.out.println("Decoded >" + ConversionUtils.bytesToBinHex(m_rawContents));
+  /**
+   * Constructor. Clones another message.
+   */
+  public MUSMessage(MUSMessage msg) {
+    // byte[] raw = msg.getBytes().toByteBuffer().array();
+    ByteBuf raw = msg.getBytes();
+    raw.readerIndex(6); // Forward past the header bytes
+    extractMUSMessage(raw);
+    // TODO: Replace the m_senderID here if we want to skip reading the bytes
+  }
 
-        //m_msgContent = new MUSMsgContent();
-        //m_msgContent = new LValue();
-        //m_msgContent.extractFromBytes(m_rawContents);
-        m_msgContent = LValue.fromRawBytes(m_rawContents, 0);
-    }
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    byte[] readRawBytes(ByteBuf msg) {
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  // (Only called directly for new message objects from the logoon handlers)
+  // Other usages use the constructor instead.
+  public void extractMUSMessage(ByteBuf buf) {
 
-        m_errCode = msg.readInt();
-        m_timeStamp = msg.readInt();
+    byte[] m_rawContents = readRawBytes(buf);
 
-        m_subject = new MUSMsgHeaderString();
-        m_subject.extractMUSMsgHeaderString(msg);
+    // Debug helpers
+    // System.out.println("Encrypted: " + m_encrypted);
+    // System.out.println("Length: " + m_rawContents.length);
+    // System.out.println("String format: " + new String(m_rawContents));
+    // System.out.println("Decoded >" + ConversionUtils.bytesToBinHex(m_rawContents));
 
-        // Sender ID always gets overwritten with the correct username later
-        // in order to prevent spoofed messages
-        m_senderID = new MUSMsgHeaderString();
-        m_senderID.extractMUSMsgHeaderString(msg);
+    //m_msgContent = new MUSMsgContent();
+    //m_msgContent = new LValue();
+    //m_msgContent.extractFromBytes(m_rawContents);
+    m_msgContent = LValue.fromRawBytes(m_rawContents, 0);
+  }
 
-        // TODO: Optimize by just skipping these bytes since they will be replaced anyway
-        // Can't do this because the senderID is not replaced when cloning a message using the MUSMessage(MUSMessage msg) constructor
-        // Need to take care of that first.
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  byte[] readRawBytes(ByteBuf msg) {
+
+    m_errCode = msg.readInt();
+    m_timeStamp = msg.readInt();
+
+    m_subject = new MUSMsgHeaderString();
+    m_subject.extractMUSMsgHeaderString(msg);
+
+    // Sender ID always gets overwritten with the correct username later
+    // in order to prevent spoofed messages
+    m_senderID = new MUSMsgHeaderString();
+    m_senderID.extractMUSMsgHeaderString(msg);
+
+    // TODO: Optimize by just skipping these bytes since they will be replaced anyway
+    // Can't do this because the senderID is not replaced when cloning a message using the MUSMessage(MUSMessage msg) constructor
+    // Need to take care of that first.
 //        int strSize = msg.readInt();
 //        if ((strSize % 2) != 0) strSize++;
 //        msg.skipBytes(strSize);
 
-        m_recptID = new MUSMsgHeaderStringList();
-        m_recptID.extractMUSMsgHeaderStringList(msg);
+    m_recptID = new MUSMsgHeaderStringList();
+    m_recptID.extractMUSMsgHeaderStringList(msg);
 
-        int contentSize = msg.readableBytes(); // The rest of the data is the contents
+    int contentSize = msg.readableBytes(); // The rest of the data is the contents
 
-        byte[] rawContents = new byte[contentSize];
-        msg.readBytes(rawContents, 0, contentSize);
-        return rawContents;
-    }
-
-
-    protected int extractInt(byte[] rawmsg, int offset) {
-        return ConversionUtils.byteArrayToInt(rawmsg, offset);
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public void dump() {
-        MUSLog.Log("MUSMessage begin <<<<<<<<<<<<<<<<<<", MUSLog.kDeb);
-        MUSLog.Log("m_errCode: " + m_errCode, MUSLog.kDeb);
-        MUSLog.Log("m_timeStamp: " + m_timeStamp, MUSLog.kDeb);
-        MUSLog.Log("m_subject: " + m_subject.toString(), MUSLog.kDeb);
-        MUSLog.Log("m_senderID: " + m_senderID.toString(), MUSLog.kDeb);
-        MUSLog.Log("m_receiptID: ", MUSLog.kDeb);
-        m_recptID.dump();
-        MUSLog.Log("m_content: ", MUSLog.kDeb);
-        m_msgContent.dump();
-        MUSLog.Log("MUSMessage end >>>>>>>>>>>>>>>>>>>>", MUSLog.kDeb);
-    }
-
-    @Override
-    public String toString() {
-        return "MUSMessage{" +
-                "m_errCode=" + m_errCode +
-                ", m_timeStamp=" + m_timeStamp +
-                ", m_subject=" + m_subject.toString() +
-                ", m_senderID=" + m_senderID.toString() +
-                ", m_recptID=" + m_recptID +
-                ", m_msgContent=" + m_msgContent +
-                ", m_udp=" + m_udp +
-                '}';
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public ByteBuf getBytes() {
-
-        byte[] subjectBytes = m_subject.getBytes();
-        byte[] senderBytes = m_senderID.getBytes();
-        byte[] recptBytes = m_recptID.getBytes();
-        byte[] contentBytes = m_msgContent.getBytes();
-
-        int contentSize = 8 + subjectBytes.length + senderBytes.length + recptBytes.length + contentBytes.length; // +8 = errorCode & timeStamp
-        ByteBuf buffer = Unpooled.buffer(6 + contentSize);
-
-        buffer.writeBytes(MUSMessage.m_header);
-        buffer.writeInt(contentSize);
-        buffer.writeInt(m_errCode);
-        buffer.writeInt(m_timeStamp);
-
-        buffer.writeBytes(subjectBytes);
-        buffer.writeBytes(senderBytes);
-        buffer.writeBytes(recptBytes);
-        buffer.writeBytes(contentBytes);
-
-        return buffer;
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public DatagramPacket toDatagramPacket(InetAddress addr, int port, boolean encrypted) {
-
-        // @TODO: FIX THIS      byte[] msgbody = getBytes();
-        byte[] msgbody = "TEMP".getBytes();
+    byte[] rawContents = new byte[contentSize];
+    msg.readBytes(rawContents, 0, contentSize);
+    return rawContents;
+  }
 
 
-        byte[] pbuffer = new byte[6 + msgbody.length];
+  protected int extractInt(byte[] rawmsg, int offset) {
+    return ConversionUtils.byteArrayToInt(rawmsg, offset);
+  }
 
-        byte[] len = new byte[4];
-        ConversionUtils.intToByteArray(msgbody.length, len, 0);
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public void dump() {
+    MUSLog.Log("MUSMessage begin <<<<<<<<<<<<<<<<<<", MUSLog.kDeb);
+    MUSLog.Log("m_errCode: " + m_errCode, MUSLog.kDeb);
+    MUSLog.Log("m_timeStamp: " + m_timeStamp, MUSLog.kDeb);
+    MUSLog.Log("m_subject: " + m_subject.toString(), MUSLog.kDeb);
+    MUSLog.Log("m_senderID: " + m_senderID.toString(), MUSLog.kDeb);
+    MUSLog.Log("m_receiptID: ", MUSLog.kDeb);
+    m_recptID.dump();
+    MUSLog.Log("m_content: ", MUSLog.kDeb);
+    m_msgContent.dump();
+    MUSLog.Log("MUSMessage end >>>>>>>>>>>>>>>>>>>>", MUSLog.kDeb);
+  }
 
-        System.arraycopy(MUSMessage.m_header, 0, pbuffer, 0, 2); // Add the SMUS header signature bytes
-        System.arraycopy(len, 0, pbuffer, 2, 4); // Add the length
-        System.arraycopy(msgbody, 0, pbuffer, 6, msgbody.length); // Add the message data
+  @Override
+  public String toString() {
+    return "MUSMessage{" +
+            "m_errCode=" + m_errCode +
+            ", m_timeStamp=" + m_timeStamp +
+            ", m_subject=" + m_subject.toString() +
+            ", m_senderID=" + m_senderID.toString() +
+            ", m_recptID=" + m_recptID +
+            ", m_msgContent=" + m_msgContent +
+            ", m_udp=" + m_udp +
+            '}';
+  }
 
-        // TODO: FIX THIS      if (encrypted)  m_cipher.encode(pbuffer);
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public ByteBuf getBytes() {
+
+    byte[] subjectBytes = m_subject.getBytes();
+    byte[] senderBytes = m_senderID.getBytes();
+    byte[] recptBytes = m_recptID.getBytes();
+    byte[] contentBytes = m_msgContent.getBytes();
+
+    int contentSize = 8 + subjectBytes.length + senderBytes.length + recptBytes.length + contentBytes.length; // +8 = errorCode & timeStamp
+    ByteBuf buffer = Unpooled.buffer(6 + contentSize);
+
+    buffer.writeBytes(MUSMessage.m_header);
+    buffer.writeInt(contentSize);
+    buffer.writeInt(m_errCode);
+    buffer.writeInt(m_timeStamp);
+
+    buffer.writeBytes(subjectBytes);
+    buffer.writeBytes(senderBytes);
+    buffer.writeBytes(recptBytes);
+    buffer.writeBytes(contentBytes);
+
+    return buffer;
+  }
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public DatagramPacket toDatagramPacket(InetAddress addr, int port, boolean encrypted) {
+
+    // @TODO: FIX THIS      byte[] msgbody = getBytes();
+    byte[] msgbody = "TEMP".getBytes();
 
 
-        return new DatagramPacket(pbuffer, pbuffer.length, addr, port);
-    }
+    byte[] pbuffer = new byte[6 + msgbody.length];
+
+    byte[] len = new byte[4];
+    ConversionUtils.intToByteArray(msgbody.length, len, 0);
+
+    System.arraycopy(MUSMessage.m_header, 0, pbuffer, 0, 2); // Add the SMUS header signature bytes
+    System.arraycopy(len, 0, pbuffer, 2, 4); // Add the length
+    System.arraycopy(msgbody, 0, pbuffer, 6, msgbody.length); // Add the message data
+
+    // TODO: FIX THIS      if (encrypted)  m_cipher.encode(pbuffer);
+
+
+    return new DatagramPacket(pbuffer, pbuffer.length, addr, port);
+  }
 
 }

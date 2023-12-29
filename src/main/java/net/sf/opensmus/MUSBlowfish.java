@@ -50,113 +50,113 @@ import io.netty.buffer.ByteBuf;
 
 public class MUSBlowfish {
 
-    MUSBlowfishCypher cipher; // Holds the cipher instance
+  final MUSBlowfishCypher cipher; // Holds the cipher instance
 
-    // Set up the cipher object to use
-    // NOT USED ANYMORE
-    public MUSBlowfish(String key) {
+  // Set up the cipher object to use
+  // NOT USED ANYMORE
+  public MUSBlowfish(String key) {
 
-        cipher = new MUSBlowfishCypher(key.getBytes());
+    cipher = new MUSBlowfishCypher(key.getBytes());
+  }
+
+  public MUSBlowfish(byte[] key) {
+
+    cipher = new MUSBlowfishCypher(key);
+  }
+
+  // Create an instance using the global key
+  public MUSBlowfish() {
+
+    cipher = new MUSBlowfishCypher();
+  }
+
+
+  // Used to decrypt the login content
+  public void decode(byte[] data) {
+
+    try {
+      // Align to the next 8 byte border
+      int originalLength = data.length;
+
+      if ((originalLength & 7) != 0) {
+        byte[] tempBuffer = new byte[(originalLength & (~7)) + 8];
+        System.arraycopy(data, 0, tempBuffer, 0, originalLength);
+
+        for (int nI = originalLength; nI < tempBuffer.length; nI++)
+          tempBuffer[nI] = 0x20;
+
+        cipher.decrypt(tempBuffer);
+        // Return to original size
+        System.arraycopy(tempBuffer, 0, data, 0, originalLength);
+      } else {
+        cipher.decrypt(data);
+      }
+
+      cipher.reset();
+
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+  }
 
-    public MUSBlowfish(byte[] key) {
+  // Not used
+  public void decode(ByteBuf data) {
 
-        cipher = new MUSBlowfishCypher(key);
+    cipher.decrypt(data, data.readableBytes());
+  }
+
+
+  public void decode(ByteBuf data, int length) {
+
+    try {
+
+      cipher.decrypt(data, length);
+      // Do not reset() since this method can be used incrementally
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-
-    // Create an instance using the global key
-    public MUSBlowfish() {
-
-        cipher = new MUSBlowfishCypher();
-    }
+  }
 
 
-    // Used to decrypt the login content
-    public void decode(byte[] data) {
+  // Used to encrypt outgoing messages
+  public void encode(ByteBuf data) {
 
-        try {
-            // Align to the next 8 byte border
-            int originalLength = data.length;
-
-            if ((originalLength & 7) != 0) {
-                byte[] tempBuffer = new byte[(originalLength & (~7)) + 8];
-                System.arraycopy(data, 0, tempBuffer, 0, originalLength);
-
-                for (int nI = originalLength; nI < tempBuffer.length; nI++)
-                    tempBuffer[nI] = 0x20;
-
-                cipher.decrypt(tempBuffer);
-                // Return to original size
-                System.arraycopy(tempBuffer, 0, data, 0, originalLength);
-            } else {
-                cipher.decrypt(data);
-            }
-
-            cipher.reset();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Not used
-    public void decode(ByteBuf data) {
-
-        cipher.decrypt(data, data.readableBytes());
-    }
+    cipher.encrypt(data);
+    cipher.reset(); // Always reset since we're only using this for complete outgoing messages
+  }
 
 
-    public void decode(ByteBuf data, int length) {
-
-        try {
-
-            cipher.decrypt(data, length);
-            // Do not reset() since this method can be used incrementally
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+  public void reset() {
+    cipher.reset();
+  }
 
 
-    // Used to encrypt outgoing messages
-    public void encode(ByteBuf data) {
+  // Used to encrypt outgoing messages
+  // NOT USED ANYMORE
+  public void encode(byte[] data) {
+    try {
+      // Align to the next 8 byte border
+      int originalLength = data.length;
 
+      if ((originalLength & 7) != 0) {
+        byte[] tempBuffer = new byte[(originalLength & (~7)) + 8];
+        System.arraycopy(data, 0, tempBuffer, 0, originalLength);
+
+        for (int nI = originalLength; nI < tempBuffer.length; nI++)
+          tempBuffer[nI] = 0x20;
+
+        cipher.encrypt(tempBuffer);
+        // Restore original size
+        System.arraycopy(tempBuffer, 0, data, 0, originalLength);
+
+      } else {
         cipher.encrypt(data);
-        cipher.reset(); // Always reset since we're only using this for complete outgoing messages
+      }
+
+      cipher.reset();
+
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-
-
-    public void reset() {
-        cipher.reset();
-    }
-
-
-    // Used to encrypt outgoing messages
-    // NOT USED ANYMORE
-    public void encode(byte[] data) {
-        try {
-            // Align to the next 8 byte border
-            int originalLength = data.length;
-
-            if ((originalLength & 7) != 0) {
-                byte[] tempBuffer = new byte[(originalLength & (~7)) + 8];
-                System.arraycopy(data, 0, tempBuffer, 0, originalLength);
-
-                for (int nI = originalLength; nI < tempBuffer.length; nI++)
-                    tempBuffer[nI] = 0x20;
-
-                cipher.encrypt(tempBuffer);
-                // Restore original size
-                System.arraycopy(tempBuffer, 0, data, 0, originalLength);
-
-            } else {
-                cipher.encrypt(data);
-            }
-
-            cipher.reset();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+  }
 }

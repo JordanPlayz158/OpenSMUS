@@ -55,213 +55,203 @@ package net.sf.opensmus;
 public class ConversionUtils {
 
 
-    public static long byteArrayToLong(byte[] buffer,
-                                       int nStartIndex) {
-        return (((long) buffer[nStartIndex]) << 56) |
-                (((long) buffer[nStartIndex + 1] & 0x0ffL) << 48) |
-                (((long) buffer[nStartIndex + 2] & 0x0ffL) << 40) |
-                (((long) buffer[nStartIndex + 3] & 0x0ffL) << 32) |
-                (((long) buffer[nStartIndex + 4] & 0x0ffL) << 24) |
-                (((long) buffer[nStartIndex + 5] & 0x0ffL) << 16) |
-                (((long) buffer[nStartIndex + 6] & 0x0ffL) << 8) |
-                ((long) buffer[nStartIndex + 7] & 0x0ff);
-    }
+  final static char[] HEXTAB = {'0', '1', '2', '3', '4', '5', '6', '7',
+          '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-    public static int byteArrayToInt(byte[] buffer,
+  public static long byteArrayToLong(byte[] buffer,
                                      int nStartIndex) {
-        return (((int) buffer[nStartIndex]) << 24) |
-                (((int) buffer[nStartIndex + 1] & 0x0ff) << 16) |
-                (((int) buffer[nStartIndex + 2] & 0x0ff) << 8) |
-                ((int) buffer[nStartIndex + 3] & 0x0ff);
-    }
+    return (((long) buffer[nStartIndex]) << 56) |
+            (((long) buffer[nStartIndex + 1] & 0x0ffL) << 48) |
+            (((long) buffer[nStartIndex + 2] & 0x0ffL) << 40) |
+            (((long) buffer[nStartIndex + 3] & 0x0ffL) << 32) |
+            (((long) buffer[nStartIndex + 4] & 0x0ffL) << 24) |
+            (((long) buffer[nStartIndex + 5] & 0x0ffL) << 16) |
+            (((long) buffer[nStartIndex + 6] & 0x0ffL) << 8) |
+            ((long) buffer[nStartIndex + 7] & 0x0ff);
+  }
 
-    public static short byteArrayToShort(byte[] buffer,
-                                         int nStartIndex) {
-        return (short) ((buffer[nStartIndex] << 8) |
-                (buffer[nStartIndex + 1] & 0xff));
-    }
+  public static int byteArrayToInt(byte[] buffer,
+                                   int nStartIndex) {
+    return (((int) buffer[nStartIndex]) << 24) |
+            (((int) buffer[nStartIndex + 1] & 0x0ff) << 16) |
+            (((int) buffer[nStartIndex + 2] & 0x0ff) << 8) |
+            ((int) buffer[nStartIndex + 3] & 0x0ff);
+  }
 
-
-    public static void longToByteArray(long lValue,
-                                       byte[] buffer,
+  public static short byteArrayToShort(byte[] buffer,
                                        int nStartIndex) {
-        buffer[nStartIndex] = (byte) (lValue >>> 56);
-        buffer[nStartIndex + 1] = (byte) ((lValue >>> 48) & 0x0ff);
-        buffer[nStartIndex + 2] = (byte) ((lValue >>> 40) & 0x0ff);
-        buffer[nStartIndex + 3] = (byte) ((lValue >>> 32) & 0x0ff);
-        buffer[nStartIndex + 4] = (byte) ((lValue >>> 24) & 0x0ff);
-        buffer[nStartIndex + 5] = (byte) ((lValue >>> 16) & 0x0ff);
-        buffer[nStartIndex + 6] = (byte) ((lValue >>> 8) & 0x0ff);
-        buffer[nStartIndex + 7] = (byte) lValue;
-    }
+    return (short) ((buffer[nStartIndex] << 8) |
+            (buffer[nStartIndex + 1] & 0xff));
+  }
 
+  public static void longToByteArray(long lValue,
+                                     byte[] buffer,
+                                     int nStartIndex) {
+    buffer[nStartIndex] = (byte) (lValue >>> 56);
+    buffer[nStartIndex + 1] = (byte) ((lValue >>> 48) & 0x0ff);
+    buffer[nStartIndex + 2] = (byte) ((lValue >>> 40) & 0x0ff);
+    buffer[nStartIndex + 3] = (byte) ((lValue >>> 32) & 0x0ff);
+    buffer[nStartIndex + 4] = (byte) ((lValue >>> 24) & 0x0ff);
+    buffer[nStartIndex + 5] = (byte) ((lValue >>> 16) & 0x0ff);
+    buffer[nStartIndex + 6] = (byte) ((lValue >>> 8) & 0x0ff);
+    buffer[nStartIndex + 7] = (byte) lValue;
+  }
 
-    public static int swapIntBytes(int lValue) {
-        byte[] bytes = new byte[4];
-        byte[] adjbytes = new byte[4];
-        intToByteArray(lValue, bytes, 0);
-        adjbytes[0] = bytes[3];
-        adjbytes[1] = bytes[2];
-        adjbytes[2] = bytes[1];
-        adjbytes[3] = bytes[0];
-        return byteArrayToInt(adjbytes, 0);
-    }
+  public static int swapIntBytes(int lValue) {
+    byte[] bytes = new byte[4];
+    byte[] adjbytes = new byte[4];
+    intToByteArray(lValue, bytes, 0);
+    adjbytes[0] = bytes[3];
+    adjbytes[1] = bytes[2];
+    adjbytes[2] = bytes[1];
+    adjbytes[3] = bytes[0];
+    return byteArrayToInt(adjbytes, 0);
+  }
 
+  public static void intToByteArray(int lValue,
+                                    byte[] buffer,
+                                    int nStartIndex) {
+    buffer[nStartIndex] = (byte) (lValue >>> 24);
+    buffer[nStartIndex + 1] = (byte) ((lValue >>> 16) & 0x0ff);
+    buffer[nStartIndex + 2] = (byte) ((lValue >>> 8) & 0x0ff);
+    buffer[nStartIndex + 3] = (byte) lValue;
+  }
 
-    public static void intToByteArray(int lValue,
+  public static void shortToByteArray(int lValue,
                                       byte[] buffer,
                                       int nStartIndex) {
-        buffer[nStartIndex] = (byte) (lValue >>> 24);
-        buffer[nStartIndex + 1] = (byte) ((lValue >>> 16) & 0x0ff);
-        buffer[nStartIndex + 2] = (byte) ((lValue >>> 8) & 0x0ff);
-        buffer[nStartIndex + 3] = (byte) lValue;
+    buffer[nStartIndex] = (byte) (0xff & (lValue >> 8));
+    buffer[nStartIndex + 1] = (byte) (0xff & lValue);
+
+
+  }
+
+  public static long intArrayToLong(int[] buffer,
+                                    int nStartIndex) {
+    return (((long) buffer[nStartIndex]) << 32) |
+            (((long) buffer[nStartIndex + 1]) & 0x0ffffffffL);
+  }
+
+  public static void longToIntArray(long lValue,
+                                    int[] buffer,
+                                    int nStartIndex) {
+    buffer[nStartIndex] = (int) (lValue >>> 32);
+    buffer[nStartIndex + 1] = (int) lValue;
+  }
+
+  public static long makeLong(int nLo,
+                              int nHi) {
+    return (((long) nHi << 32) |
+            ((long) nLo & 0x00000000ffffffffL));
+  }
+
+  public static int longLo32(long lVal) {
+    return (int) lVal;
+  }
+
+  public static int longHi32(long lVal) {
+    return (int) (lVal >>> 32);
+  }
+
+  public static String bytesToBinHex(byte[] data) {
+    return bytesToBinHex(data, 0, data.length);
+  }
+
+  public static String longToBinHex(long lValue) {
+    byte[] data = new byte[8];
+    longToByteArray(lValue, data, 0);
+    return bytesToBinHex(data, 0, data.length);
+  }
+
+  public static String intToBinHex(int lValue) {
+    byte[] data = new byte[4];
+    intToByteArray(lValue, data, 0);
+    return bytesToBinHex(data, 0, data.length);
+  }
+
+
+  public static String bytesToBinHex(byte[] data,
+                                     int nStartPos,
+                                     int nNumOfBytes) {
+    StringBuilder sBuilder = new StringBuilder(nNumOfBytes << 1);
+
+    int nPos = 0;
+    for (int nI = 0; nI < nNumOfBytes; nI++) {
+      sBuilder.setCharAt(nPos++, HEXTAB[(data[nI + nStartPos] >> 4) & 0x0f]);
+      sBuilder.setCharAt(nPos++, HEXTAB[data[nI + nStartPos] & 0x0f]);
+    }
+    return sBuilder.toString();
+  }
+
+
+  public static int binHexToBytes(String sBinHex,
+                                  byte[] data,
+                                  int nSrcPos,
+                                  int nDstPos,
+                                  int nNumOfBytes) {
+    int nStrLen = sBinHex.length();
+
+    int nAvailBytes = (nStrLen - nSrcPos) >> 1;
+    if (nAvailBytes < nNumOfBytes) {
+      nNumOfBytes = nAvailBytes;
     }
 
-    public static void shortToByteArray(int lValue,
-                                        byte[] buffer,
-                                        int nStartIndex) {
-        buffer[nStartIndex] = (byte) (0xff & (lValue >> 8));
-        buffer[nStartIndex + 1] = (byte) (0xff & lValue);
-
-
+    int nOutputCapacity = data.length - nDstPos;
+    if (nNumOfBytes > nOutputCapacity) {
+      nNumOfBytes = nOutputCapacity;
     }
 
+    int nResult = 0;
+    for (int nI = 0; nI < nNumOfBytes; nI++) {
+      byte bActByte = 0;
+      boolean blConvertOK = true;
+      for (int nJ = 0; nJ < 2; nJ++) {
+        bActByte <<= 4;
+        char cActChar = sBinHex.charAt(nSrcPos++);
 
-    public static long intArrayToLong(int[] buffer,
-                                      int nStartIndex) {
-        return (((long) buffer[nStartIndex]) << 32) |
-                (((long) buffer[nStartIndex + 1]) & 0x0ffffffffL);
-    }
-
-
-    public static void longToIntArray(long lValue,
-                                      int[] buffer,
-                                      int nStartIndex) {
-        buffer[nStartIndex] = (int) (lValue >>> 32);
-        buffer[nStartIndex + 1] = (int) lValue;
-    }
-
-
-    public static long makeLong(int nLo,
-                                int nHi) {
-        return (((long) nHi << 32) |
-                ((long) nLo & 0x00000000ffffffffL));
-    }
-
-
-    public static int longLo32(long lVal) {
-        return (int) lVal;
-    }
-
-    public static int longHi32(long lVal) {
-        return (int) ((long) (lVal >>> 32));
-    }
-
-    final static char[] HEXTAB = {'0', '1', '2', '3', '4', '5', '6', '7',
-            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-
-
-    public static String bytesToBinHex(byte[] data) {
-        return bytesToBinHex(data, 0, data.length);
-    }
-
-    public static String longToBinHex(long lValue) {
-        byte[] data = new byte[8];
-        longToByteArray(lValue, data, 0);
-        return bytesToBinHex(data, 0, data.length);
-    }
-
-    public static String intToBinHex(int lValue) {
-        byte[] data = new byte[4];
-        intToByteArray(lValue, data, 0);
-        return bytesToBinHex(data, 0, data.length);
-    }
-
-
-    public static String bytesToBinHex(byte[] data,
-                                       int nStartPos,
-                                       int nNumOfBytes) {
-        StringBuffer sbuf = new StringBuffer();
-        sbuf.setLength(nNumOfBytes << 1);
-
-        int nPos = 0;
-        for (int nI = 0; nI < nNumOfBytes; nI++) {
-            sbuf.setCharAt(nPos++, HEXTAB[(data[nI + nStartPos] >> 4) & 0x0f]);
-            sbuf.setCharAt(nPos++, HEXTAB[data[nI + nStartPos] & 0x0f]);
+        if ((cActChar >= 'a') && (cActChar <= 'f')) {
+          bActByte |= (byte) (cActChar - 'a') + 10;
+        } else {
+          if ((cActChar >= '0') && (cActChar <= '9')) {
+            bActByte |= (byte) (cActChar - '0');
+          } else {
+            blConvertOK = false;
+          }
         }
-        return sbuf.toString();
+      }
+      if (blConvertOK) {
+        data[nDstPos++] = bActByte;
+        nResult++;
+      }
     }
 
+    return nResult;
+  }
 
-    public static int binHexToBytes(String sBinHex,
-                                    byte[] data,
-                                    int nSrcPos,
-                                    int nDstPos,
-                                    int nNumOfBytes) {
-        int nStrLen = sBinHex.length();
+  public static String byteArrayToUNCString(byte[] data,
+                                            int nStartPos,
+                                            int nNumOfBytes) {
+    // We need two bytes for every character
+    nNumOfBytes &= ~1;
 
-        int nAvailBytes = (nStrLen - nSrcPos) >> 1;
-        if (nAvailBytes < nNumOfBytes) {
-            nNumOfBytes = nAvailBytes;
-        }
+    // Enough bytes in the buffer?
+    int nAvailCapacity = data.length - nStartPos;
 
-        int nOutputCapacity = data.length - nDstPos;
-        if (nNumOfBytes > nOutputCapacity) {
-            nNumOfBytes = nOutputCapacity;
-        }
-
-        int nResult = 0;
-        for (int nI = 0; nI < nNumOfBytes; nI++) {
-            byte bActByte = 0;
-            boolean blConvertOK = true;
-            for (int nJ = 0; nJ < 2; nJ++) {
-                bActByte <<= 4;
-                char cActChar = sBinHex.charAt(nSrcPos++);
-
-                if ((cActChar >= 'a') && (cActChar <= 'f')) {
-                    bActByte |= (byte) (cActChar - 'a') + 10;
-                } else {
-                    if ((cActChar >= '0') && (cActChar <= '9')) {
-                        bActByte |= (byte) (cActChar - '0');
-                    } else {
-                        blConvertOK = false;
-                    }
-                }
-            }
-            if (blConvertOK) {
-                data[nDstPos++] = bActByte;
-                nResult++;
-            }
-        }
-
-        return nResult;
+    if (nAvailCapacity < nNumOfBytes) {
+      nNumOfBytes = nAvailCapacity;
     }
 
-    public static String byteArrayToUNCString(byte[] data,
-                                              int nStartPos,
-                                              int nNumOfBytes) {
-        // We need two bytes for every character
-        nNumOfBytes &= ~1;
+    StringBuilder sbuf = new StringBuilder(nNumOfBytes >> 1);
 
-        // Enough bytes in the buffer?
-        int nAvailCapacity = data.length - nStartPos;
+    int nSBufPos = 0;
 
-        if (nAvailCapacity < nNumOfBytes) {
-            nNumOfBytes = nAvailCapacity;
-        }
-
-        StringBuffer sbuf = new StringBuffer();
-        sbuf.setLength(nNumOfBytes >> 1);
-
-        int nSBufPos = 0;
-
-        while (nNumOfBytes > 0) {
-            sbuf.setCharAt(nSBufPos++,
-                    (char) (((int) data[nStartPos] << 8) | ((int) data[nStartPos + 1] & 0x0ff)));
-            nStartPos += 2;
-            nNumOfBytes -= 2;
-        }
-
-        return sbuf.toString();
+    while (nNumOfBytes > 0) {
+      sbuf.setCharAt(nSBufPos++,
+              (char) (((int) data[nStartPos] << 8) | ((int) data[nStartPos + 1] & 0x0ff)));
+      nStartPos += 2;
+      nNumOfBytes -= 2;
     }
+
+    return sbuf.toString();
+  }
 }

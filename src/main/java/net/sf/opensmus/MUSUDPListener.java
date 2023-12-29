@@ -29,43 +29,43 @@
 
 package net.sf.opensmus;
 
-import java.net.*;
-import java.io.*;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 public class MUSUDPListener extends Thread {
-    MUSUser m_user;
-    DatagramSocket m_udpsocket;
-    int m_maxpacketsize;
-    boolean m_alive = true;
+  final MUSUser m_user;
+  final DatagramSocket m_udpsocket;
+  final int m_maxpacketsize;
+  boolean m_alive = true;
 
 
-    public MUSUDPListener(MUSUser user, DatagramSocket udpsocket, int maxpacketsize) {
-        m_user = user;
-        m_udpsocket = udpsocket;
-        m_maxpacketsize = maxpacketsize;
-        if (maxpacketsize > 16384)
-            m_maxpacketsize = 16384;
+  public MUSUDPListener(MUSUser user, DatagramSocket udpsocket, int maxpacketsize) {
+    m_user = user;
+    m_udpsocket = udpsocket;
+    m_maxpacketsize = Math.min(maxpacketsize, 16384);
 
-        start();
+    start();
+  }
+
+  @Override
+  public void run() {
+    try {
+      while (m_alive) {
+        byte[] receivebuffer = new byte[m_maxpacketsize];
+        DatagramPacket receivePacket = new DatagramPacket(receivebuffer, receivebuffer.length);
+        m_udpsocket.receive(receivePacket);
+        // m_user.logInBytes(receivePacket.getLength());
+        m_user.processUDPPacket(receivePacket.getData());
+      }
+    } catch (IOException e) {
+      if (m_alive)
+        MUSLog.Log("UDP Socket Read IO exception", MUSLog.kDeb);
     }
+  }
 
-    @Override
-    public void run() {
-        try {
-            while (m_alive) {
-                byte[] receivebuffer = new byte[m_maxpacketsize];
-                DatagramPacket receivePacket = new DatagramPacket(receivebuffer, receivebuffer.length);
-                m_udpsocket.receive(receivePacket);
-                // m_user.logInBytes(receivePacket.getLength());
-                m_user.processUDPPacket(receivePacket.getData());
-            }
-        } catch (IOException e) {
-            if (m_alive)
-                MUSLog.Log("UDP Socket Read IO exception", MUSLog.kDeb);
-        }
-    }
-
-    public void send(MUSMessage msg, InetAddress addr, int port) {
+  public void send(MUSMessage msg, InetAddress addr, int port) {
 
         /*
         try {
@@ -78,9 +78,9 @@ public class MUSUDPListener extends Thread {
                 MUSLog.Log("UDP Socket Send IO exception", MUSLog.kDeb);
         }
         */
-    }
+  }
 
-    public void kill() {
-        m_alive = false;
-    }
+  public void kill() {
+    m_alive = false;
+  }
 }

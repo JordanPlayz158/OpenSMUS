@@ -36,72 +36,69 @@ package net.sf.opensmus;
  */
 public interface ServerUserDatabase {
 
-    int AUTHENTICATION_NONE = 0;
-    int AUTHENTICATION_OPTIONAL = 1;
-    int AUTHENTICATION_REQUIRED = 2;
+  int AUTHENTICATION_NONE = 0;
+  int AUTHENTICATION_OPTIONAL = 1;
+  int AUTHENTICATION_REQUIRED = 2;
 
-    /**
-     * Creates a user record in the user database
-     *
-     * @param usernamein Username string, will be converted to uppercase for storage
-     * @param password   Password string
-     * @param userlevel  User access level as a string. Usual values are between 20 and 100.
-     *                   <BR> If the string specified can not be converted the default user level will be set.
-     * @return true if the user account is created successfully, false if an error occurs
-     */
-    public boolean createUser(String usernamein, String password, String userlevel);
+  /**
+   * Creates a user record in the user database
+   *
+   * @param usernamein Username string, will be converted to uppercase for storage
+   * @param password   Password string
+   * @param userlevel  User access level as a string. Usual values are between 20 and 100.
+   *                   <BR> If the string specified can not be converted the default user level will be set.
+   * @return true if the user account is created successfully, false if an error occurs
+   */
+  boolean createUser(String usernamein, String password, String userlevel);
 
-    /**
-     * Updates the last login time for this user in the database to the current time.
-     *
-     * @param userid User id integer retrieved by the getDBUser method.
-     */
-    public void updateUserLastLoginTime(int userid);
+  /**
+   * Updates the last login time for this user in the database to the current time.
+   *
+   * @param userid User id integer retrieved by the getDBUser method.
+   */
+  void updateUserLastLoginTime(int userid);
 
-    /**
-     * Returns the integer id for the user in the database.
-     * <BR>Other methods use the user id for speed.
-     *
-     * @param usernamein Username string
-     */
-    public int getDBUser(String usernamein) throws DBException, UserNotFoundException;
+  /**
+   * Returns the integer id for the user in the database.
+   * <BR>Other methods use the user id for speed.
+   *
+   * @param usernamein Username string
+   */
+  int getDBUser(String usernamein) throws DBException, UserNotFoundException;
 
-    /**
-     * Deletes the user with the specified user id from the database.
-     *
-     * @param userid User id integer retrieved by the getDBUser method.
-     * @return true if the user account is deleted successfully, false if an error occurs
-     */
-    public boolean deleteDBUser(int userid);
+  /**
+   * Deletes the user with the specified user id from the database.
+   *
+   * @param userid User id integer retrieved by the getDBUser method.
+   * @return true if the user account is deleted successfully, false if an error occurs
+   */
+  boolean deleteDBUser(int userid);
 
-    /**
-     * Retrieves the user access level
-     *
-     * @param userid User id integer retrieved by the getDBUser method.
-     */
-    public int getDBUserLevel(int userid) throws DBException;
+  /**
+   * Retrieves the user access level
+   *
+   * @param userid User id integer retrieved by the getDBUser method.
+   */
+  int getDBUserLevel(int userid) throws DBException;
 
-    /**
-     * Retrieves the user password
-     *
-     * @param userid User id integer retrieved by the getDBUser method.
-     */
-    public String getDBUserPassword(int userid) throws DBException;
+  /**
+   * Retrieves the user password
+   *
+   * @param userid User id integer retrieved by the getDBUser method.
+   */
+  String getDBUserPassword(int userid) throws DBException;
 
-    /**
-     * Checks if a user/pass combination is valid and sets the userlevel
-     *
-     * @param oneUser The user object that will have the userlevel set
-     * @param username
-     * @param password
-     * @return 0 if allowed to login, MUS errorcode if not.
-     */
-    public int checkLogin(MUSUser oneUser, String username, String password);
+  /**
+   * Checks if a user/pass combination is valid and sets the userlevel
+   *
+   * @param oneUser  The user object that will have the userlevel set
+   * @return 0 if allowed to login, MUS errorcode if not.
+   */
+  int checkLogin(MUSUser oneUser, String username, String password);
 
-    /**
-     * Checks if the user database is enabled.
-     * <BR>Databases are enabled by default, but can be disabled by using the OpenSMUS.cfg file.
-     */
-    public boolean isEnabled();
+  /**
+   * Checks if the user database is enabled.
+   * <BR>Databases are enabled by default, but can be disabled by using the OpenSMUS.cfg file.
+   */
+  boolean isEnabled();
 }
- 

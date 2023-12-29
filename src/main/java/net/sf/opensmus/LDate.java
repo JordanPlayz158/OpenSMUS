@@ -31,108 +31,108 @@ package net.sf.opensmus;
 
 import java.util.Date;
 
-/** 
- *Class representing a Lingo compatible date value (LDate for short)
- *Date values are stored and retrieved as an opaque array of bytes
- *Lingo is a trademark of Adobe, Inc. All rights reserved.
+/**
+ * Class representing a Lingo compatible date value (LDate for short)
+ * Date values are stored and retrieved as an opaque array of bytes
+ * Lingo is a trademark of Adobe, Inc. All rights reserved.
  */
 public class LDate extends LValue {
 
-    private byte[] m_bytes;
+  private final byte[] bytes;
 
-    /**
-     * Constructor
-     */
-    public LDate(byte[] initbytes) {
-        m_bytes = initbytes;
-        setType(LValue.vt_Date);
-    }
+  /**
+   * Constructor
+   */
+  public LDate(byte[] initbytes) {
+    bytes = initbytes;
+    setType(LValue.vt_Date);
+  }
 
-    /**
-     * Constructor
-     */
-    public LDate() {
-        m_bytes = new byte[8];
-        byte[] tempBytes = new byte[8];
-        // Default to the current date
-        long time = System.currentTimeMillis()/1000; // the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT)
-        ConversionUtils.longToByteArray(time, tempBytes, 0);
-        // The lower 32 bits are bytes 5-8, so they need to be swapped.
-        m_bytes[0] = tempBytes[4];
-        m_bytes[1] = tempBytes[5];
-        m_bytes[2] = tempBytes[6];
-        m_bytes[3] = tempBytes[7];
-        m_bytes[4] = tempBytes[0];
-        m_bytes[5] = tempBytes[1];
-        m_bytes[6] = tempBytes[2];
-        m_bytes[7] = tempBytes[3];
+  /**
+   * Constructor
+   */
+  public LDate() {
+    bytes = new byte[8];
+    byte[] tempBytes = new byte[8];
+    // Default to the current date
+    long time = System.currentTimeMillis() / 1000; // the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT)
+    ConversionUtils.longToByteArray(time, tempBytes, 0);
+    // The lower 32 bits are bytes 5-8, so they need to be swapped.
+    bytes[0] = tempBytes[4];
+    bytes[1] = tempBytes[5];
+    bytes[2] = tempBytes[6];
+    bytes[3] = tempBytes[7];
+    bytes[4] = tempBytes[0];
+    bytes[5] = tempBytes[1];
+    bytes[6] = tempBytes[2];
+    bytes[7] = tempBytes[3];
 
-        setType(LValue.vt_Date);
-    }
+    setType(LValue.vt_Date);
+  }
 
-    /**
-     * Returns the byte array storing the date value in binary format
-     */
-    @Override
-    public byte[] toBytes() {
-        return m_bytes;
-    }
+  /**
+   * Returns the byte array storing the date value in binary format
+   */
+  @Override
+  public byte[] toBytes() {
+    return bytes;
+  }
 
-    /**
-     * Returns a Java Date object
-     */
-    public Date toDate() {
-        
-        byte[] tempBytes = new byte[8];
-        tempBytes[0] = m_bytes[4];
-        tempBytes[1] = m_bytes[5];
-        tempBytes[2] = m_bytes[6];
-        tempBytes[3] = m_bytes[7];
-        tempBytes[4] = m_bytes[0];
-        tempBytes[5] = m_bytes[1];
-        tempBytes[6] = m_bytes[2];
-        tempBytes[7] = m_bytes[3];
-        long epoch = ConversionUtils.byteArrayToLong(tempBytes, 0) * 1000; // Measured in milliseconds
-        return (new java.util.Date (epoch));
-    }
+  /**
+   * Returns a Java Date object
+   */
+  public Date toDate() {
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public int extractFromBytes(byte[] rawBytes, int offset) {
+    byte[] tempBytes = new byte[8];
+    tempBytes[0] = bytes[4];
+    tempBytes[1] = bytes[5];
+    tempBytes[2] = bytes[6];
+    tempBytes[3] = bytes[7];
+    tempBytes[4] = bytes[0];
+    tempBytes[5] = bytes[1];
+    tempBytes[6] = bytes[2];
+    tempBytes[7] = bytes[3];
+    long epoch = ConversionUtils.byteArrayToLong(tempBytes, 0) * 1000; // Measured in milliseconds
+    return (new java.util.Date(epoch));
+  }
 
-        System.arraycopy(rawBytes, offset, m_bytes, 0, 8);
-        return 8;
-    }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public int extractFromBytes(byte[] rawBytes, int offset) {
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public byte[] getBytes() {
+    System.arraycopy(rawBytes, offset, bytes, 0, 8);
+    return 8;
+  }
 
-        byte[] finalbytes = new byte[10];
-        ConversionUtils.shortToByteArray((int) vt_Date, finalbytes, 0);
-        // ConversionUtils.intToByteArray(m_bytes.length, finalbytes, 2);
-        System.arraycopy(m_bytes, 0, finalbytes, 2, m_bytes.length);
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public byte[] getBytes() {
 
-        return finalbytes;
-    }
+    byte[] finalbytes = new byte[10];
+    ConversionUtils.shortToByteArray(vt_Date, finalbytes, 0);
+    // ConversionUtils.intToByteArray(m_bytes.length, finalbytes, 2);
+    System.arraycopy(bytes, 0, finalbytes, 2, bytes.length);
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public void dump() {
-        MUSLog.Log("Date> " + ConversionUtils.bytesToBinHex(m_bytes), MUSLog.kDeb);
-    }
+    return finalbytes;
+  }
 
-    
-    @Override
-    public String toString() {
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public void dump() {
+    MUSLog.Log("Date> " + ConversionUtils.bytesToBinHex(bytes), MUSLog.kDeb);
+  }
 
-        return toDate().toString();
-    }
+
+  @Override
+  public String toString() {
+
+    return toDate().toString();
+  }
 
 }

@@ -35,77 +35,76 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * TODO Why are the class variables like 'm_server' package protected?
- *
  */
 public class MUSServerLoginQueue extends Thread {
-	
-    final MUSServer m_server;
-    
-    final BlockingQueue<MUSQueuedMessage> m_queue;
-    
-    final int m_queuewait;
-    
-    volatile boolean m_alive = true;
-    
 
-    // Handles log in messages
-    public MUSServerLoginQueue(final MUSServer server, int maxmessages, int queuewait) {
-    	
-    	super("MUSServerLoginQueueThread");
-    	
-        this.m_server = server;
-        this.m_queue = new LinkedBlockingQueue<MUSQueuedMessage>(maxmessages);
-        this.m_queuewait = queuewait;
-        
-        // TODO No good idea to play around with the thread priority
-        // On heavy load no more log ins are possible
-        this.setPriority(MAX_PRIORITY - 1);
-    }
+  final MUSServer m_server;
 
-    @Override
-    public void run() {
-        try {
-            while (this.m_alive) {
+  final BlockingQueue<MUSQueuedMessage> m_queue;
 
-                MUSQueuedMessage msg = this.m_queue.poll(this.m_queuewait, TimeUnit.MILLISECONDS);
-                if (msg != null) {
-                    try {
-                    	this.m_server.processLogonMessage(msg.m_msg, (MUSUser) msg.m_user);
-                    } catch (NullPointerException e) {
-                        MUSLog.Log("Null pointer in MUSServerLoginQueue " + msg, MUSLog.kDeb);
-                        MUSLog.Log(e, MUSLog.kDeb);
-                    }
-                }
-            }
-        } catch (InterruptedException e) {
-            MUSLog.Log("MUSServerLoginQueue interrupted", MUSLog.kDeb);
-            this.kill();
-            
-            // TODO Interrupt gets swallowed here. Will break the interrupt chain
+  final int m_queuewait;
+
+  volatile boolean m_alive = true;
+
+
+  // Handles log in messages
+  public MUSServerLoginQueue(final MUSServer server, int maxmessages, int queuewait) {
+
+    super("MUSServerLoginQueueThread");
+
+    this.m_server = server;
+    this.m_queue = new LinkedBlockingQueue<>(maxmessages);
+    this.m_queuewait = queuewait;
+
+    // TODO No good idea to play around with the thread priority
+    // On heavy load no more log ins are possible
+    this.setPriority(MAX_PRIORITY - 1);
+  }
+
+  @Override
+  public void run() {
+    try {
+      while (this.m_alive) {
+
+        MUSQueuedMessage msg = this.m_queue.poll(this.m_queuewait, TimeUnit.MILLISECONDS);
+        if (msg != null) {
+          try {
+            this.m_server.processLogonMessage(msg.m_msg, (MUSUser) msg.m_user);
+          } catch (NullPointerException e) {
+            MUSLog.Log("Null pointer in MUSServerLoginQueue " + msg, MUSLog.kDeb);
+            MUSLog.Log(e, MUSLog.kDeb);
+          }
         }
+      }
+    } catch (InterruptedException e) {
+      MUSLog.Log("MUSServerLoginQueue interrupted", MUSLog.kDeb);
+      this.kill();
+
+      // TODO Interrupt gets swallowed here. Will break the interrupt chain
     }
+  }
 
-    public boolean queue(final MUSQueuedMessage msg) {
-    	
-        try {
-            if (this.m_alive) {
-                if (!this.m_queue.offer(msg, this.m_queuewait, TimeUnit.MILLISECONDS)) {
-                    MUSLog.Log("Could not queue login message", MUSLog.kDebWarn);
-                    return false;
-                }
-            }
+  public boolean queue(final MUSQueuedMessage msg) {
 
-            return true;
-
-        } catch (InterruptedException e) {
-            MUSLog.Log("Could not queue login message ", MUSLog.kDebWarn);
-            return false;
+    try {
+      if (this.m_alive) {
+        if (!this.m_queue.offer(msg, this.m_queuewait, TimeUnit.MILLISECONDS)) {
+          MUSLog.Log("Could not queue login message", MUSLog.kDebWarn);
+          return false;
         }
-    }
+      }
 
-    public void kill() {
+      return true;
 
-    	this.m_queue.clear();
-    	this.m_alive = false;
+    } catch (InterruptedException e) {
+      MUSLog.Log("Could not queue login message ", MUSLog.kDebWarn);
+      return false;
     }
+  }
+
+  public void kill() {
+
+    this.m_queue.clear();
+    this.m_alive = false;
+  }
 }

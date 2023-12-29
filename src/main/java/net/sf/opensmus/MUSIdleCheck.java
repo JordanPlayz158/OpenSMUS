@@ -32,41 +32,37 @@ package net.sf.opensmus;
 // Doesn't check user idle anymore. That is handled by Netty.
 public class MUSIdleCheck extends Thread {
 
-    private final MUSServer server;
+  private final MUSServer server;
 
-    public MUSIdleCheck(MUSServer svr) {
+  public MUSIdleCheck(MUSServer svr) {
 
-        super("MUSIdleCheckThread");
+    super("MUSIdleCheckThread");
 
-        this.server = svr;
+    this.server = svr;
+  }
+
+  @Override
+  public void run() {
+
+    try {
+      while (server.m_alive) {
+
+        server.checkDatabaseConnections();
+
+        server.ensureLoggerThreadIsAlive();
+
+        if (server.m_props.getIntProperty("EnableServerStructureChecks") == 1)
+          server.checkStructure();
+
+        // Minimum 30 seconds between idle checks
+        Thread.sleep(Math.max(30000, server.idle * 1000));
+      }
+    } catch (InterruptedException e) {
+      // TODO Why error. Will be issued by server shutdown
+      MUSLog.Log("IdleCheck Error!", MUSLog.kDeb);
+
+      // Dont swallow interrupt exceptions
+      Thread.currentThread().interrupt();
     }
-
-    @Override
-    public void run() {
-
-        try {
-            while (server.m_alive) {
-
-                server.checkDatabaseConnections();
-
-                server.ensureLoggerThreadIsAlive();
-
-                if (server.m_props.getIntProperty("EnableServerStructureChecks") == 1)
-                    server.checkStructure();
-
-                // Minimum 30 seconds between idle checks
-                if (server.idle > 30)
-                    Thread.sleep(server.idle * 1000);
-                else
-                    Thread.sleep(30000);
-            }
-        }
-        catch (InterruptedException e) {
-            // TODO Why error. Will be issued by server shutdown
-            MUSLog.Log("IdleCheck Error!", MUSLog.kDeb);
-
-            // Dont swallow interrupt exceptions
-            Thread.currentThread().interrupt();
-        }
-    }
+  }
 }

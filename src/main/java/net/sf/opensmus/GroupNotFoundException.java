@@ -30,7 +30,7 @@
 package net.sf.opensmus;
 
 public class GroupNotFoundException extends Exception implements java.io.Serializable {
-	public GroupNotFoundException(String msg) {
-		super(msg);
-	}
+  public GroupNotFoundException(String msg) {
+    super(msg);
+  }
 }

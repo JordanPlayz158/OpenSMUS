@@ -35,28 +35,28 @@ package net.sf.opensmus;
  */
 public class LVoid extends LValue {
 
-    /**
-     * Constructor
-     */
-    public LVoid() {
-        setType(LValue.vt_Void);
-    }
+  /**
+   * Constructor
+   */
+  public LVoid() {
+    setType(LValue.vt_Void);
+  }
 
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    @Override
-    public byte[] getBytes() {
-        byte[] finalbytes = new byte[2];
-        ConversionUtils.shortToByteArray((int) vt_Void, finalbytes, 0);
-        return finalbytes;
-    }
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  @Override
+  public byte[] getBytes() {
+    byte[] finalbytes = new byte[2];
+    ConversionUtils.shortToByteArray(vt_Void, finalbytes, 0);
+    return finalbytes;
+  }
 
 
-    @Override
-    public String toString() {
+  @Override
+  public String toString() {
 
-        return "void";
-    }
+    return "void";
+  }
 
 }

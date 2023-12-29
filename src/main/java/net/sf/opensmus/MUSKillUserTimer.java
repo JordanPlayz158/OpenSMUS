@@ -30,23 +30,23 @@
 package net.sf.opensmus;
 
 public class MUSKillUserTimer extends Thread {
-    private MUSUser m_user;
-    private int m_timeToKill;
+  private final MUSUser m_user;
+  private final int m_timeToKill;
 
-    public MUSKillUserTimer(MUSUser oneuser, int timeToKill) {
-        m_user = oneuser;
-        m_timeToKill = timeToKill;
-        start();
-    }
+  public MUSKillUserTimer(MUSUser oneuser, int timeToKill) {
+    m_user = oneuser;
+    m_timeToKill = timeToKill;
+    start();
+  }
 
-    @Override
-    public void run() {
-        try {
-            sleep(m_timeToKill);
-            m_user.killMUSUser();
-        } catch (InterruptedException e) {
-            MUSLog.Log("KillUserTimer Error!", MUSLog.kDeb);
-        }
+  @Override
+  public void run() {
+    try {
+      sleep(m_timeToKill);
+      m_user.killMUSUser();
+    } catch (InterruptedException e) {
+      MUSLog.Log("KillUserTimer Error!", MUSLog.kDeb);
     }
+  }
 }
 

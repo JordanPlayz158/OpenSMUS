@@ -30,136 +30,135 @@
 package net.sf.opensmus;
 
 import io.netty.buffer.ByteBuf;
-
-import java.util.*;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Vector;
 
 /**
  * Class representing a list of MUSMsgHeaderString objects, stored as a Java Vector.
  */
 public class MUSMsgHeaderStringList {
 
-    /**
-     * Public vector element storing the MUSMsgHeaderString members.
-     * It is safe to access the elements directly.
-     */
-    public Vector<MUSMsgHeaderString> m_stringlist;
+  /**
+   * Public vector element storing the MUSMsgHeaderString members.
+   * It is safe to access the elements directly.
+   */
+  public final Vector<MUSMsgHeaderString> m_stringlist;
 
-    /**
-     * Default Constructor
-     */
-    public MUSMsgHeaderStringList() {
-        m_stringlist = new Vector<MUSMsgHeaderString>();
+  /**
+   * Default Constructor
+   */
+  public MUSMsgHeaderStringList() {
+    m_stringlist = new Vector<>();
+  }
+
+  /**
+   * Adds a MUSMsgHeaderString to the list
+   *
+   * @param elem MUSMsgHeaderString to add
+   */
+  public void addElement(MUSMsgHeaderString elem) {
+    m_stringlist.addElement(elem);
+  }
+
+  /**
+   * Retrieves an Enumeration object containing the MUSMsgHeaderString elements.
+   */
+  public Enumeration<MUSMsgHeaderString> elements() {
+    return m_stringlist.elements();
+  }
+
+  /**
+   * Retrieves an Enumeration object containing the MUSMsgHeaderString elements.
+   */
+  public ArrayList<String> getAllRecipients() {
+
+    ArrayList<String> recep = new ArrayList<>(m_stringlist.size());
+    Enumeration<MUSMsgHeaderString> r = m_stringlist.elements();
+    while (r.hasMoreElements()) {
+      recep.add(r.nextElement().toString());
     }
+    return recep; // m_stringlist.toArray(new MUSMsgHeaderString[0]);
+  }
 
-    /**
-     * Adds a MUSMsgHeaderString to the list
-     *
-     * @param elem MUSMsgHeaderString to add
-     * @return boolean
-     */
-    public boolean addElement(MUSMsgHeaderString elem) {
-        m_stringlist.addElement(elem);
+  /**
+   * Removes all MUSMsgHeaderString elements.
+   */
+  public void clear() {
+    m_stringlist.clear();
+  }
 
-        return true;
+  /**
+   * Returns the number of MUSMsgHeaderString elements.
+   */
+  public int count() {
+    return m_stringlist.size();
+  }
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public void extractMUSMsgHeaderStringList(ByteBuf buffer) {
+
+    int numStrings = buffer.readInt();
+    MUSMsgHeaderString tempStr;
+    for (int a = 0; a < numStrings; a++) {
+      tempStr = new MUSMsgHeaderString();
+      tempStr.extractMUSMsgHeaderString(buffer);
+      m_stringlist.addElement(tempStr);
     }
+  }
 
-    /**
-     * Retrieves an Enumeration object containing the MUSMsgHeaderString elements.
-     */
-    public Enumeration<MUSMsgHeaderString> elements() {
-        return m_stringlist.elements();
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public void dump() {
+
+    for (MUSMsgHeaderString ms : m_stringlist) {
+      MUSLog.Log("String list: ", MUSLog.kDeb);
+      ms.dump();
     }
+  }
 
-    /**
-     * Retrieves an Enumeration object containing the MUSMsgHeaderString elements.
-     */
-    public ArrayList<String> getAllRecipients() {
+  @Override
+  public String toString() {
 
-        ArrayList<String> recep = new ArrayList<String>(m_stringlist.size());
-        Enumeration r = m_stringlist.elements();
-        while (r.hasMoreElements()) {
-            recep.add(r.nextElement().toString());
-        }
-        return recep; // m_stringlist.toArray(new MUSMsgHeaderString[0]);
+    StringBuilder temp = new StringBuilder("MUSMsgHeaderStringList{");
+
+    for (MUSMsgHeaderString ms : m_stringlist) {
+      temp.append(ms.toString()).append(", ");
     }
+    temp.setLength(temp.length() - 2);
+    temp.append("}");
 
-    /**
-     * Removes all MUSMsgHeaderString elements.
-     */
-    public void clear() {
-         m_stringlist.clear();
+    return temp.toString();
+  }
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public byte[] getBytes() {
+
+    try { // @TODO: Convert to ByteBuffer
+      ByteArrayOutputStream bstream = new ByteArrayOutputStream(2);
+      DataOutputStream datastream = new DataOutputStream(bstream);
+
+      datastream.writeInt(m_stringlist.size());
+
+      for (MUSMsgHeaderString elem : m_stringlist) {
+        byte[] elemBytes = elem.getBytes();
+        datastream.write(elemBytes, 0, elemBytes.length);
+      }
+
+      return bstream.toByteArray();
+    } catch (IOException e) {
+      MUSLog.Log("Error in stringlist stream", MUSLog.kDeb);
+      return "0".getBytes();
     }
-
-    /**
-     * Returns the number of MUSMsgHeaderString elements.
-     */
-    public int count() {
-         return m_stringlist.size();
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public void extractMUSMsgHeaderStringList(ByteBuf buffer) {
-
-        int numStrings = buffer.readInt();
-        MUSMsgHeaderString tempStr;
-        for (int a = 0; a < numStrings; a++) {
-            tempStr = new MUSMsgHeaderString();
-            tempStr.extractMUSMsgHeaderString(buffer);
-            m_stringlist.addElement(tempStr);
-        }
-    }
-
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public void dump() {
-
-        for (MUSMsgHeaderString ms : m_stringlist) {
-            MUSLog.Log("String list: ", MUSLog.kDeb);
-            ms.dump();
-        }
-    }
-
-    @Override
-    public String toString() {
-
-        StringBuffer temp = new StringBuffer();
-        temp.append("MUSMsgHeaderStringList{");
-
-        for (MUSMsgHeaderString ms : m_stringlist) {
-            temp.append(ms.toString()).append(", ");
-        }
-        temp.setLength(temp.length() - 2);
-        temp.append("}");
-
-        return temp.toString();
-    }
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public byte[] getBytes() {
-
-        try { // @TODO: Convert to ByteBuffer
-            ByteArrayOutputStream bstream = new ByteArrayOutputStream(2);
-            DataOutputStream datastream = new DataOutputStream(bstream);
-
-            datastream.writeInt(m_stringlist.size());
-
-            for (MUSMsgHeaderString elem : m_stringlist) {
-                byte[] elemBytes = elem.getBytes();
-                datastream.write(elemBytes, 0, elemBytes.length);
-            }
-
-            return bstream.toByteArray();
-        } catch (IOException e) {
-            MUSLog.Log("Error in stringlist stream", MUSLog.kDeb);
-            return "0".getBytes();
-        }
-    }
+  }
 
 }

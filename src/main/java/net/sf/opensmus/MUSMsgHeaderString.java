@@ -41,94 +41,94 @@ import java.io.UnsupportedEncodingException;
  */
 public class MUSMsgHeaderString {
 
-    private byte[] m_string;
+  private byte[] m_string;
 
-    /**
-     * Constructs a MUSMsgHeaderString from a Java String.
-     */
-    public MUSMsgHeaderString(String initString) {
+  /**
+   * Constructs a MUSMsgHeaderString from a Java String.
+   */
+  public MUSMsgHeaderString(String initString) {
 
-        m_string = initString.getBytes();
+    m_string = initString.getBytes();
+  }
+
+
+  /**
+   * Default Constructor
+   */
+  public MUSMsgHeaderString() {
+
+    m_string = "".getBytes();
+  }
+
+
+  /**
+   * Constructs a MUSMsgHeaderString from a Java String using the named charset.
+   */
+  public MUSMsgHeaderString(String initString, String charsetName) throws UnsupportedEncodingException {
+
+    m_string = initString.getBytes(charsetName);
+  }
+
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public void extractMUSMsgHeaderString(ByteBuf buffer) {
+
+    int strSize = buffer.readInt();
+
+    // Sanity check
+    if (strSize < 0 || strSize > buffer.readableBytes()) {
+      MUSLog.Log("MUSMsgHeaderString size error : " + strSize + " " + buffer.readableBytes() + " " + ByteBufUtil.hexDump(buffer), MUSLog.kDeb);
+      throw new NullPointerException("MUSMsgHeaderString size error " + strSize + " " + buffer.readableBytes());
     }
 
+    m_string = new byte[strSize];
 
-    /**
-     * Default Constructor
-     */
-    public MUSMsgHeaderString() {
+    buffer.readBytes(m_string, 0, strSize);
 
-        m_string = "".getBytes();
+    if ((strSize % 2) != 0) buffer.skipBytes(1); // Consume one more byte
+  }
+
+
+  /**
+   * Returns this MUSMsgHeaderString as a Java String.
+   */
+  @Override
+  public String toString() {
+
+    return new String(m_string);
+  }
+
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public void dump() {
+
+    MUSLog.Log("String> " + new String(m_string), MUSLog.kDeb);
+  }
+
+
+  /**
+   * Reserved for internal use of OpenSMUS.
+   */
+  public byte[] getBytes() {
+
+    int finalSize = 4 + m_string.length;
+    boolean addPadding = false;
+    if ((finalSize % 2) != 0) {
+      finalSize++;
+      addPadding = true;
     }
 
+    byte[] finalbytes = new byte[finalSize];
+    ConversionUtils.intToByteArray(m_string.length, finalbytes, 0);
+    System.arraycopy(m_string, 0, finalbytes, 4, m_string.length);
 
-    /**
-     * Constructs a MUSMsgHeaderString from a Java String using the named charset.
-     */
-    public MUSMsgHeaderString(String initString, String charsetName) throws UnsupportedEncodingException {
+    if (addPadding) finalbytes[finalSize - 1] = 0x00;
 
-        m_string = initString.getBytes(charsetName);
-    }
-
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public void extractMUSMsgHeaderString(ByteBuf buffer) {
-
-        int strSize = buffer.readInt();
-
-        // Sanity check
-        if (strSize < 0 || strSize > buffer.readableBytes()) {
-            MUSLog.Log("MUSMsgHeaderString size error : " + strSize + " " + buffer.readableBytes() + " " + ByteBufUtil.hexDump(buffer), MUSLog.kDeb);
-            throw new NullPointerException("MUSMsgHeaderString size error " + strSize + " " + buffer.readableBytes());
-        }
-
-        m_string = new byte[strSize];
-
-        buffer.readBytes(m_string, 0, strSize);
-
-        if ((strSize % 2) != 0) buffer.skipBytes(1); // Consume one more byte
-    }
-
-
-    /**
-     * Returns this MUSMsgHeaderString as a Java String.
-     */
-    @Override
-    public String toString() {
-
-        return new String(m_string);
-    }
-
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public void dump() {
-
-        MUSLog.Log("String> " + new String(m_string), MUSLog.kDeb);
-    }
-
-
-    /**
-     * Reserved for internal use of OpenSMUS.
-     */
-    public byte[] getBytes() {
-
-        int finalSize = 4 + m_string.length;
-        boolean addPadding = false;
-        if ((finalSize % 2) != 0) {
-            finalSize++;
-            addPadding = true;
-        }
-
-        byte[] finalbytes = new byte[finalSize];
-        ConversionUtils.intToByteArray(m_string.length, finalbytes, 0);
-        System.arraycopy(m_string, 0, finalbytes, 4, m_string.length);
-
-        if (addPadding) finalbytes[finalSize - 1] = 0x00;
-
-        return finalbytes;
-    }
+    return finalbytes;
+  }
 
 }

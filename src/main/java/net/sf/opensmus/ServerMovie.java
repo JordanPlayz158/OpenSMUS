@@ -36,92 +36,91 @@ package net.sf.opensmus;
  */
 public interface ServerMovie {
 
-    /**
-     * Retrieves a pointer to a ServerGroup object representing a group that exists on this ServerMovie.
-     *
-     * @param groupname String with the name of the group to be returned
-     * @return ServerGroup pointer, or throws a GroupNotFoundException
-     */
-    public ServerGroup getServerGroup(String groupname) throws GroupNotFoundException;
+  /**
+   * Retrieves a pointer to a ServerGroup object representing a group that exists on this ServerMovie.
+   *
+   * @param groupname String with the name of the group to be returned
+   * @return ServerGroup pointer, or throws a GroupNotFoundException
+   */
+  ServerGroup getServerGroup(String groupname) throws GroupNotFoundException;
 
-    /**
-     * Retrieves a pointer to a ServerGroup object representing a group that exists on this ServerMovie.
-     *
-     * @param groupidx index of the movie to be returned
-     * @return ServerGroup pointer, or throws a GroupNotFoundException
-     */
-    public ServerGroup getServerGroup(int groupidx) throws GroupNotFoundException;
+  /**
+   * Retrieves a pointer to a ServerGroup object representing a group that exists on this ServerMovie.
+   *
+   * @param groupidx index of the movie to be returned
+   * @return ServerGroup pointer, or throws a GroupNotFoundException
+   */
+  ServerGroup getServerGroup(int groupidx) throws GroupNotFoundException;
 
-    /**
-     * Creates a new group on the movie and returns a pointer to it.
-     *
-     * @param groupname String with the name of the group to be created
-     * @return ServerGroup pointer, or throws a MUSErrorCode if the creation fails
-     */
-    public ServerGroup createServerGroup(String groupname) throws MUSErrorCode;
+  /**
+   * Creates a new group on the movie and returns a pointer to it.
+   *
+   * @param groupname String with the name of the group to be created
+   * @return ServerGroup pointer, or throws a MUSErrorCode if the creation fails
+   */
+  ServerGroup createServerGroup(String groupname) throws MUSErrorCode;
 
-    /**
-     * Deletes a group from the movie.
-     *
-     * @param groupname String with the name of the group to be deleted
-     */
-    public void deleteServerGroup(String groupname);
+  /**
+   * Deletes a group from the movie.
+   *
+   * @param groupname String with the name of the group to be deleted
+   */
+  void deleteServerGroup(String groupname);
 
-    /**
-     * Gets the number of groups in this movie.
-     *
-     * @return the number of groups
-     */
-    public int serverGroupCount();
+  /**
+   * Gets the number of groups in this movie.
+   *
+   * @return the number of groups
+   */
+  int serverGroupCount();
 
-    /**
-     * Gets the number of users connected to this movie.
-     *
-     * @return the number of users
-     */
-    public int serverUserCount();
+  /**
+   * Gets the number of users connected to this movie.
+   *
+   * @return the number of users
+   */
+  int serverUserCount();
 
-    /**
-     * Returns the name of the movie as a String
-     */
-    public String name();
+  /**
+   * Returns the name of the movie as a String
+   */
+  String name();
 
-    /**
-     * Gets the default user levels for users that connect to this movie and do not have a user account in the DB.
-     * <BR> This value can be configured by the DefaultUserLevel directive in a movie configuration file.
-     */
-    public int userLevel();
+  /**
+   * Gets the default user levels for users that connect to this movie and do not have a user account in the DB.
+   * <BR> This value can be configured by the DefaultUserLevel directive in a movie configuration file.
+   */
+  int userLevel();
 
-    /**
-     * Sets the default user levels for users that connect to this movie and do not have a user account in the DB.
-     * <BR> When this method is used it overrides the value configured by the DefaultUserLevel directive in a movie configuration file.
-     */
-    public void setuserLevel(int level);
+  /**
+   * Sets the default user levels for users that connect to this movie and do not have a user account in the DB.
+   * <BR> When this method is used it overrides the value configured by the DefaultUserLevel directive in a movie configuration file.
+   */
+  void setuserLevel(int level);
 
-    /**
-     * Enables this group to receive new users. Groups are enabled by default.
-     */
-    public void enableGroup(String gname);
+  /**
+   * Enables this group to receive new users. Groups are enabled by default.
+   */
+  void enableGroup(String gname);
 
-    /**
-     * Disables this group so new users can not join it.
-     */
-    public void disableGroup(String gname);
+  /**
+   * Disables this group so new users can not join it.
+   */
+  void disableGroup(String gname);
 
-    /**
-     * Checks if the movie is set to persist on the server even when no users are connected to it.
-     * Movies are not persistent by default.
-     *
-     * @return TRUE if the movie is set to persist, FALSE otherwise
-     */
-    public boolean persists();
+  /**
+   * Checks if the movie is set to persist on the server even when no users are connected to it.
+   * Movies are not persistent by default.
+   *
+   * @return TRUE if the movie is set to persist, FALSE otherwise
+   */
+  boolean persists();
 
-    /**
-     * Toggles the movie persistent flag for this movie.
-     * Persistent movies are not destroyed even when no users are connected to it.
-     *
-     * @param persistflag TRUE if the movie needs to persist on the server, FALSE otherwise
-     */
-    public void setpersists(boolean persistflag);
-  
-} 
+  /**
+   * Toggles the movie persistent flag for this movie.
+   * Persistent movies are not destroyed even when no users are connected to it.
+   *
+   * @param persistflag TRUE if the movie needs to persist on the server, FALSE otherwise
+   */
+  void setpersists(boolean persistflag);
+}
